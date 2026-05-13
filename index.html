@@ -223,7 +223,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
       <button class="tb-btn pr" onclick="doSearch()">Search</button>
       <button class="tb-btn" onclick="clearResult()">Clear</button>
     </div>
-    <div class="tb-right"><button class="tb-btn" onclick="toggleHelp()" title="How to use" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fef3c7;border-color:#fcd34d;color:#92400e" onmouseover="this.style.background='#fde68a';this.style.borderColor='#f59e0b'" onmouseout="this.style.background='#fef3c7';this.style.borderColor='#fcd34d'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button><button id="btn-export" class="tb-btn" onclick="exportPdf()" title="Export current view as PDF" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#ecfdf5;border-color:#a7f3d0;color:#065f46" onmouseover="this.style.background='#d1fae5';this.style.borderColor='#34d399'" onmouseout="this.style.background='#ecfdf5';this.style.borderColor='#a7f3d0'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button><button id="install-btn" hidden style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:#2563eb;border:1px solid #1d4ed8;border-radius:4px;padding:5px 12px;cursor:pointer" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Install App</button><div class="tb-tag" id="tb-tag-locals">HFIAW · 3 Locals</div><div class="tb-dot"></div></div><button id="mobile-menu-btn" type="button" aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+    <div class="tb-right"><button id="btn-irex" class="tb-btn" onclick="toggleIrex()" title="Toggle Irex Argus branches" aria-pressed="false" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fff;border-color:#1e5fa8;color:#1e5fa8" onmouseover="this.style.background='#eaf2fb'" onmouseout="if(this.getAttribute('aria-pressed')!=='true')this.style.background='#fff'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 9l9-6 9 6"/><line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/></svg>Irex Branches</button><button class="tb-btn" onclick="toggleHelp()" title="How to use" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fef3c7;border-color:#fcd34d;color:#92400e" onmouseover="this.style.background='#fde68a';this.style.borderColor='#f59e0b'" onmouseout="this.style.background='#fef3c7';this.style.borderColor='#fcd34d'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button><button id="btn-export" class="tb-btn" onclick="exportPdf()" title="Export current view as PDF" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#ecfdf5;border-color:#a7f3d0;color:#065f46" onmouseover="this.style.background='#d1fae5';this.style.borderColor='#34d399'" onmouseout="this.style.background='#ecfdf5';this.style.borderColor='#a7f3d0'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button><button id="install-btn" hidden style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:#2563eb;border:1px solid #1d4ed8;border-radius:4px;padding:5px 12px;cursor:pointer" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Install App</button><div class="tb-tag" id="tb-tag-locals">HFIAW · 3 Locals</div><div class="tb-dot"></div></div><button id="mobile-menu-btn" type="button" aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
   </div>
   
   <div id="help-modal" onclick="if(event.target===this)toggleHelp()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)">
@@ -343,7 +343,7 @@ async function loadData(){
     var cfgRows=results[1].data;
     if(!locRows||!cfgRows)throw new Error('empty Supabase response');
 
-    var appData={locals:{},fipsToLocal:{},stateAbbr:{},hanford:{}};
+    var appData={locals:{},fipsToLocal:{},stateAbbr:{},hanford:{},irexBranches:[]};
     locRows.forEach(function(row){
       var base={id:row.id,name:row.name,color:row.color,hallCity:row.hall_city,address:row.address,phone:row.phone,bm:row.bm,cba:row.cba,jurisdiction:row.jurisdiction,subsNote:row.subs_note,center:row.center,zoom:row.zoom,calcKind:row.calc_kind};
       appData.locals[row.id]=Object.assign(base,row.rate_config||{});
@@ -352,6 +352,7 @@ async function loadData(){
       if(row.key==='fipsToLocal')appData.fipsToLocal=row.value;
       else if(row.key==='stateAbbr')appData.stateAbbr=row.value;
       else if(row.key==='hanford')appData.hanford=row.value;
+      else if(row.key==='irex_branches')appData.irexBranches=Array.isArray(row.value)?row.value:[];
     });
 
     // Cache for offline
@@ -557,6 +558,102 @@ var HALL_COORDS={
   '82':  [47.6588, -117.4260],   // Spokane, WA
   '135': [36.1716, -115.1391],   // Las Vegas, NV
 };
+
+// ── Irex Argus branches (toggle layer) ─────────────────────────────────────
+// Square Argus-blue markers, hidden by default, separate from the round
+// union-hall pins. Clicking one routes from that branch to the current
+// destination — using whichever local's rates apply to the destination county.
+var IREX_BRANCHES=Array.isArray(data.irexBranches)?data.irexBranches:[];
+var IREX_LAYER=L.layerGroup();
+var IREX_VISIBLE=false;
+var IREX_COLOR='#1e5fa8';
+function buildIrexLayer(){
+  IREX_LAYER.clearLayers();
+  IREX_BRANCHES.forEach(function(b){
+    if(b.active===false)return;
+    if(typeof b.lat!=='number'||typeof b.lng!=='number')return;
+    var html='<div style="pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);'
+      +'filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))">'
+      +'<div style="width:18px;height:18px;background:'+IREX_COLOR+';border:2px solid #fff;'
+        +'border-radius:3px;display:flex;align-items:center;justify-content:center;'
+        +'box-shadow:0 0 0 1px '+IREX_COLOR+'55">'
+        +'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 9l9-6 9 6"/></svg>'
+      +'</div>'
+      +'<div style="background:#fff;color:'+IREX_COLOR+';font-family:Space Mono,monospace;'
+        +'font-size:11px;font-weight:700;padding:1px 6px;border-radius:3px;border:1.5px solid '+IREX_COLOR+';'
+        +'margin-top:3px;white-space:nowrap;text-align:center">Irex — '+escSb(b.name||'')+'</div></div>';
+    var m=L.marker([b.lat,b.lng],{
+      icon:L.divIcon({className:'',html:html,iconSize:[0,0],iconAnchor:[0,0]}),
+      title:'Irex Argus — '+(b.name||''),
+      zIndexOffset:700
+    });
+    var popup=
+      '<div style="font-family:DM Sans,sans-serif;min-width:200px">'
+      +'<div style="font-family:Space Mono,monospace;font-size:11px;font-weight:700;color:'+IREX_COLOR+';letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Irex Argus Branch</div>'
+      +'<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px">'+escSb(b.name||'')+'</div>'
+      +'<div style="font-size:11px;color:#475569;line-height:1.5">'+escSb(b.address||'')+(b.city?'<br/>'+escSb(b.city)+', '+escSb(b.state||'')+' '+escSb(b.zip||''):'')+'</div>'
+      +(b.phone?'<div style="font-family:Space Mono,monospace;font-size:11px;color:#1e5fa8;margin-top:6px">'+escSb(b.phone)+'</div>':'')
+      +'<button onclick="useIrexAsDispatch('+b.id+')" style="margin-top:10px;width:100%;background:'+IREX_COLOR+';color:#fff;font-family:Space Mono,monospace;font-size:11px;font-weight:700;border:none;border-radius:5px;padding:7px 10px;cursor:pointer;letter-spacing:.5px">USE AS DISPATCH</button>'
+      +'</div>';
+    m.bindPopup(popup,{closeButton:true,offset:[0,-6]});
+    m.on('click',function(){ m.openPopup(); });
+    IREX_LAYER.addLayer(m);
+  });
+}
+buildIrexLayer();
+
+function toggleIrex(){
+  IREX_VISIBLE=!IREX_VISIBLE;
+  var btn=document.getElementById('btn-irex');
+  if(IREX_VISIBLE){
+    IREX_LAYER.addTo(map);
+    if(btn){btn.setAttribute('aria-pressed','true');btn.style.background=IREX_COLOR;btn.style.color='#fff';}
+  } else {
+    if(map.hasLayer(IREX_LAYER))map.removeLayer(IREX_LAYER);
+    if(btn){btn.setAttribute('aria-pressed','false');btn.style.background='#fff';btn.style.color=IREX_COLOR;}
+  }
+}
+window.toggleIrex=toggleIrex;
+
+// Looks up the local that covers the active destination county, then
+// uses the chosen Irex branch as the dispatch origin and routes to the
+// destination. Falls back to flying to the branch if no destination yet.
+function useIrexAsDispatch(branchId){
+  var b=IREX_BRANCHES.find(function(x){return x.id===branchId;});
+  if(!b)return;
+  // Close any open popups
+  try{map.closePopup();}catch(_){}
+  if(CUR_LAT===null||CUR_LNG===null){
+    // No destination yet — just pan to the branch so the user can click a county
+    map.flyTo([b.lat,b.lng],8,{duration:.9});
+    return;
+  }
+  // Use whichever local applies to the active destination. If no local
+  // (county outside any jurisdiction), we still route — but rate will be N/A.
+  var lid=CUR_LID||(CALC_LID!=null?CALC_LID:null);
+  if(!lid){
+    // Pick nearest local as a courtesy
+    var nr=findNearestAcrossAll(CUR_LAT,CUR_LNG);
+    lid=nr?nr.lid:null;
+  }
+  var displayName='Irex — '+(b.name||'');
+  // Clear existing dispatch state so the Irex branch fully takes over
+  Object.keys(dispatchLGs).forEach(function(k){map.removeLayer(dispatchLGs[k]);});
+  dispatchLGs={};ACTIVE_STACK=[];AUTO_SELECTED=false;
+  document.querySelectorAll('.dp-btn').forEach(function(b){paintDpBtn(b,'inactive');});
+  // Draw rings + set primary (this triggers drawRoute internally)
+  var lg=drawDispatchRings(lid,displayName,b.lat,b.lng);
+  dispatchLGs[displayName]=lg;lg.addTo(map);
+  PRIMARY_DISPATCH={lid:lid,name:displayName,lat:b.lat,lng:b.lng};
+  CALC_LID=lid;
+  ACTIVE_STACK=[displayName];
+  if(CUR_LAT!==null&&CUR_LNG!==null){
+    var lc=LOCALS[lid]?LOCALS[lid].color:IREX_COLOR;
+    drawRoute(b.lat,b.lng,(b.name||'Irex'),CUR_LAT,CUR_LNG,lc);
+    rebuildCalc();
+  }
+}
+window.useIrexAsDispatch=useIrexAsDispatch;
 
 // Hall-location markers — sit on each local's actual union-hall city
 // with the full "Local NN" label.

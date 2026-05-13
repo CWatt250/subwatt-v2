@@ -152,6 +152,12 @@ a{color:#2563eb}
     <div class="section-hd"><h2>Rate Editor</h2></div>
     <div id="locals-container"><div class="empty-state"><span class="spinner"></span>Loading locals…</div></div>
 
+    <!-- Irex branches -->
+    <div style="margin-top:36px">
+      <div class="section-hd"><h2>Irex Branches</h2><button class="btn btn-ghost btn-sm" onclick="loadIrex()">Refresh</button><button class="btn btn-success btn-sm" onclick="addIrexBranch()" style="margin-left:6px">+ Add Branch</button><button class="btn btn-primary btn-sm" onclick="saveIrex()" style="margin-left:6px">Save</button></div>
+      <div id="irex-container"><div class="empty-state"><span class="spinner"></span>Loading branches…</div></div>
+    </div>
+
     <!-- Audit log -->
     <div style="margin-top:36px">
       <div class="section-hd"><h2>Change History</h2><button class="btn btn-ghost btn-sm" onclick="loadAudit()">Refresh</button></div>
@@ -183,6 +189,7 @@ supa.auth.onAuthStateChange(function(event,session){
     document.getElementById('admin-badge').textContent=session.user.email;
     document.getElementById('logout-btn').style.display='';
     loadLocals();
+    loadIrex();
     loadAudit();
     loadAnalytics();
   } else {
@@ -471,6 +478,74 @@ async function loadAudit(){
   });
   html+='</tbody></table>';
   container.innerHTML=html;
+}
+
+// ── Irex Branches ─────────────────────────────────────────────────────────────
+var IREX=[];   // in-memory copy of the branches array
+async function loadIrex(){
+  var c=document.getElementById('irex-container');
+  c.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading branches…</div>';
+  var r=await supa.from('global_config').select('value').eq('key','irex_branches').maybeSingle();
+  if(r.error){c.innerHTML='<div class="empty-state">Error: '+r.error.message+'</div>';return;}
+  IREX=(r.data&&Array.isArray(r.data.value))?r.data.value.slice():[];
+  renderIrex();
+}
+function renderIrex(){
+  var c=document.getElementById('irex-container');
+  if(!IREX.length){c.innerHTML='<div class="empty-state">No branches yet. Click + Add Branch.</div>';return;}
+  var html='<div style="overflow-x:auto"><table class="rate-table" style="font-size:11px">'
+    +'<thead><tr>'
+      +'<th style="width:28px"></th>'
+      +'<th>Name</th>'
+      +'<th>Address</th>'
+      +'<th>City</th>'
+      +'<th>St</th>'
+      +'<th>Zip</th>'
+      +'<th>Phone</th>'
+      +'<th style="width:90px">Lat</th>'
+      +'<th style="width:90px">Lng</th>'
+      +'<th style="width:60px;text-align:center">Active</th>'
+      +'<th style="width:32px"></th>'
+    +'</tr></thead><tbody>';
+  IREX.forEach(function(b,i){
+    html+='<tr>'
+      +'<td style="color:#94a3b8;font-family:Space Mono,monospace">#'+esc(b.id||'')+'</td>'
+      +'<td><input class="zone-label-input" style="width:120px" data-fld="name"    data-idx="'+i+'" value="'+esc(b.name||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="zone-label-input" style="width:200px" data-fld="address" data-idx="'+i+'" value="'+esc(b.address||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="zone-label-input" style="width:120px" data-fld="city"    data-idx="'+i+'" value="'+esc(b.city||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="zone-label-input" style="width:40px"  data-fld="state"   data-idx="'+i+'" value="'+esc(b.state||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="zone-label-input" style="width:60px"  data-fld="zip"     data-idx="'+i+'" value="'+esc(b.zip||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="zone-label-input" style="width:130px" data-fld="phone"   data-idx="'+i+'" value="'+esc(b.phone||'')+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="rate-input"       style="width:90px"  data-fld="lat"     data-idx="'+i+'" type="number" step="0.0001" value="'+esc(String(b.lat||0))+'" oninput="irexEdit(this)"/></td>'
+      +'<td><input class="rate-input"       style="width:90px"  data-fld="lng"     data-idx="'+i+'" type="number" step="0.0001" value="'+esc(String(b.lng||0))+'" oninput="irexEdit(this)"/></td>'
+      +'<td style="text-align:center"><input type="checkbox" data-fld="active" data-idx="'+i+'" '+(b.active!==false?'checked':'')+' onchange="irexEdit(this)"/></td>'
+      +'<td><button class="btn btn-danger btn-sm" onclick="irexDelete('+i+')">×</button></td>'
+      +'</tr>';
+  });
+  html+='</tbody></table></div>';
+  c.innerHTML=html;
+}
+function irexEdit(el){
+  var i=Number(el.dataset.idx), f=el.dataset.fld;
+  if(IREX[i]==null)return;
+  if(f==='active')IREX[i][f]=el.checked;
+  else if(f==='lat'||f==='lng')IREX[i][f]=parseFloat(el.value)||0;
+  else IREX[i][f]=el.value;
+}
+function addIrexBranch(){
+  var maxId=IREX.reduce(function(m,b){return Math.max(m,Number(b.id)||0);},0);
+  IREX.push({id:maxId+1,name:'New Branch',address:'',city:'',state:'',zip:'',phone:'',lat:0,lng:0,active:true});
+  renderIrex();
+}
+function irexDelete(i){
+  if(!confirm('Delete '+(IREX[i].name||('branch '+i))+'?'))return;
+  IREX.splice(i,1);
+  renderIrex();
+}
+async function saveIrex(){
+  var r=await supa.from('global_config').upsert({key:'irex_branches',value:IREX},{onConflict:'key'});
+  if(r.error){toast('Save failed: '+r.error.message,'error');return;}
+  toast(IREX.length+' branches saved','success');
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────

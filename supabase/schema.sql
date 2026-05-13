@@ -168,3 +168,51 @@ create trigger trg_locals_updated_at
   before update on locals
   for each row
   execute function set_updated_at();
+
+-- ==========================================================================
+-- global_config — single-row-per-key bucket for non-tabular blobs
+-- (fipsToLocal, stateAbbr, hanford, irex_branches). The actual table was
+-- created out-of-band; this block declares the policies you need so the
+-- admin app can write to it.
+-- ==========================================================================
+create table if not exists global_config (
+  key   text  primary key,
+  value jsonb not null default '{}'::jsonb
+);
+alter table global_config enable row level security;
+
+drop policy if exists "Public read — global_config"          on global_config;
+drop policy if exists "Authenticated insert — global_config" on global_config;
+drop policy if exists "Authenticated update — global_config" on global_config;
+drop policy if exists "Authenticated delete — global_config" on global_config;
+
+create policy "Public read — global_config"
+  on global_config for select using (true);
+create policy "Authenticated insert — global_config"
+  on global_config for insert to authenticated with check (true);
+create policy "Authenticated update — global_config"
+  on global_config for update to authenticated using (true) with check (true);
+create policy "Authenticated delete — global_config"
+  on global_config for delete to authenticated using (true);
+
+-- ==========================================================================
+-- Optional: irex_branches as a real table instead of a JSON blob in
+-- global_config. The admin UI and seed scripts would need updates.
+-- ==========================================================================
+-- create table if not exists irex_branches (
+--   id      bigint  generated always as identity primary key,
+--   name    text    not null,
+--   address text    default '',
+--   city    text    default '',
+--   state   text    default '',
+--   zip     text    default '',
+--   phone   text    default '',
+--   lat     double precision,
+--   lng     double precision,
+--   active  boolean default true,
+--   created_at timestamptz not null default now()
+-- );
+-- alter table irex_branches enable row level security;
+-- create policy "Public read — irex_branches" on irex_branches for select using (true);
+-- create policy "Authenticated CRUD — irex_branches" on irex_branches for all
+--   to authenticated using (true) with check (true);
