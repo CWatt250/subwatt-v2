@@ -241,29 +241,43 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
         <div style="display:flex;gap:12px;margin-bottom:14px">
           <div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">1</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Pick a location</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.5">Click any county on the map or search for a city. The nearest dispatch point auto-activates.</div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Pick a destination</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">Click any county on the map, or type a city in the search bar. SubWatt picks the local that covers it and auto-selects the nearest dispatch point. The big <b>$X/day</b> at the top of the result card is your rate.</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:14px">
           <div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">2</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Review the cost</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.5">Sidebar shows road miles, zone, and daily rate. Route is drawn on the map.</div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Browse locals in the sidebar</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">Every HFIAW local is listed on the left. Click a card to expand it and reveal its dispatch buttons. Only one card is open at a time. The sidebar scrolls if you have more locals than fit.</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;margin-bottom:14px">
           <div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">3</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Switch dispatch</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.5">Click any other dispatch button to recalculate from that location. The <b>filled button</b> is your primary.</div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Compare dispatch points</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">With a destination already selected, click any other dispatch button \u2014 even from a different local \u2014 to reroute and recompute the rate. Only the active dispatch's zone rings show on the map; old rings clear automatically. The map view stays put so you don't lose your job site.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px">
+          <div style="width:24px;height:24px;background:#1e5fa8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">4</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Irex Argus branches</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">Hit the <b style="color:#1e5fa8">Irex Branches</b> button in the top bar to show the 9 Argus locations as blue square markers. Click any marker, then <b style="color:#1e5fa8">USE AS DISPATCH</b> in the popup, to route from that branch instead \u2014 SubWatt still applies the local rate that covers your destination county.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:14px">
+          <div style="width:24px;height:24px;background:#a855f7;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">5</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Hanford Site</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">Colored polygons inside Benton County (100/200/300/400 areas) use the flat HSSA rate instead of distance zones.</div>
           </div>
         </div>
         <div style="display:flex;gap:12px">
-          <div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">4</div>
+          <div style="width:24px;height:24px;background:#10b981;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0">6</div>
           <div>
-            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Hanford Site</div>
-            <div style="font-size:12px;color:#64748b;line-height:1.5">Colored polygons inside Benton County use flat HSSA rates instead of distance zones.</div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px">Edit miles or export</div>
+            <div style="font-size:12px;color:#64748b;line-height:1.5">The miles field in the Daily Cost Calculator auto-fills from the road route \u2014 type a different number to override. Use <b>Export PDF</b> in the top bar to save the current view.</div>
           </div>
         </div>
         <div id="help-coverage" style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:10px;color:#94a3b8;line-height:1.5;text-align:center">
@@ -638,9 +652,8 @@ function useIrexAsDispatch(branchId){
   }
   var displayName='Irex — '+(b.name||'');
   // Clear existing dispatch state so the Irex branch fully takes over
-  Object.keys(dispatchLGs).forEach(function(k){map.removeLayer(dispatchLGs[k]);});
-  dispatchLGs={};ACTIVE_STACK=[];AUTO_SELECTED=false;
-  document.querySelectorAll('.dp-btn').forEach(function(b){paintDpBtn(b,'inactive');});
+  clearAllDispatchRingsOnly();
+  AUTO_SELECTED=false;
   // Draw rings + set primary (this triggers drawRoute internally)
   var lg=drawDispatchRings(lid,displayName,b.lat,b.lng);
   dispatchLGs[displayName]=lg;lg.addTo(map);
@@ -1537,44 +1550,39 @@ function drawDispatchRings(lid,name,lat,lng){
   return lg;
 }
 
+// Strip every dispatch's ring layer + reset every button to inactive, but
+// LEAVE the destination state (CUR_LAT/CUR_LNG) alone — used whenever a
+// new dispatch takes over so we never have stale Hermiston rings sitting
+// on the map after the user picked Pasco.
+function clearAllDispatchRingsOnly(){
+  Object.keys(dispatchLGs).forEach(function(k){
+    try{map.removeLayer(dispatchLGs[k]);}catch(e){}
+  });
+  dispatchLGs={};
+  ACTIVE_STACK=[];
+  document.querySelectorAll('.dp-btn').forEach(function(b){paintDpBtn(b,'inactive');});
+}
+
 function dpToggle(lid,name,lat,lng,btn){
   AUTO_SELECTED=false;
   var state=btn.getAttribute('data-state')||'inactive';
   var isPrimary=PRIMARY_DISPATCH&&PRIMARY_DISPATCH.name===name;
 
-  if(state==='inactive'){
-    // Turn on as primary
-    var lg=drawDispatchRings(lid,name,lat,lng);
-    dispatchLGs[name]=lg;lg.addTo(map);
-    setPrimaryDispatch(lid,name,lat,lng);
-    return;
-  }
-
-  if(state==='active'&&!isPrimary){
-    // Already showing rings but not primary — promote to primary
-    setPrimaryDispatch(lid,name,lat,lng);
-    return;
-  }
-
-  // If we get here, state is 'primary' — turn it off entirely
-  if(dispatchLGs[name]){map.removeLayer(dispatchLGs[name]);delete dispatchLGs[name];}
-  ACTIVE_STACK=ACTIVE_STACK.filter(function(n){return n!==name;});
-  paintDpBtn(btn,'inactive');
-  PRIMARY_DISPATCH=null;CALC_LID=null;
-  clearRoute();
-  // Promote next in stack to primary if any
-  if(ACTIVE_STACK.length>0){
-    var nextName=ACTIVE_STACK[0];
-    // Find its lid/lat/lng from the dispatch buttons
-    var nextBtn=findDpBtn(nextName);
-    if(nextBtn){
-      var parts=nextBtn.getAttribute('data-dp-meta').split('|');
-      setPrimaryDispatch(parseInt(parts[0]),parts[1],parseFloat(parts[2]),parseFloat(parts[3]));
-    }
-  } else {
-    // No more active — rebuild calculator to show empty state
+  // Clicking the active primary again turns dispatch off entirely.
+  if(state==='primary'&&isPrimary){
+    clearAllDispatchRingsOnly();
+    PRIMARY_DISPATCH=null;CALC_LID=null;
+    clearRoute();
     if(CUR_LAT!==null)rebuildCalc();
+    return;
   }
+
+  // Any other case is "make THIS dispatch the only one on the map".
+  // Wipe whatever was there before, then draw + promote.
+  clearAllDispatchRingsOnly();
+  var lg=drawDispatchRings(lid,name,lat,lng);
+  dispatchLGs[name]=lg;lg.addTo(map);
+  setPrimaryDispatch(lid,name,lat,lng);
 }
 
 
@@ -1744,6 +1752,14 @@ Object.defineProperty(window,'CUR_LAT',{get:function(){return CUR_LAT;}});
 Object.defineProperty(window,'CUR_LNG',{get:function(){return CUR_LNG;}});
 Object.defineProperty(window,'CALC_LID',{get:function(){return CALC_LID;}});
 Object.defineProperty(window,'PRIMARY_DISPATCH',{get:function(){return PRIMARY_DISPATCH;}});
+Object.defineProperty(window,'__dispatchRingCount',{get:function(){
+  var n=0;
+  Object.keys(dispatchLGs).forEach(function(k){
+    var lg=dispatchLGs[k];
+    if(lg&&lg.eachLayer)lg.eachLayer(function(layer){ if(layer instanceof L.Circle)n++; });
+  });
+  return n;
+}});
 window.subwattMap=map;
 window.dispatchEvent(new CustomEvent('subwatt:ready'));
 }
