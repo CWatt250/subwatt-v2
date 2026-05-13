@@ -527,26 +527,85 @@ Object.keys(HANFORD_LABELS).forEach(function(id){
 });
 
 
-// Colored hall-city markers so every local — including those outside the
-// county-shaded states — is visibly placed on the map in its own color.
+// Hall-city pin coordinates. Centers stored on locals.center are the
+// territory view target (used by flyTo); these are the actual union-hall
+// addresses where the marker should sit.
+var HALL_COORDS={
+  '7':   [47.4739, -122.2607],   // Tukwila, WA
+  '16':  [37.7249, -122.1561],   // San Leandro, CA
+  '28':  [39.8028, -105.0875],   // Arvada, CO
+  '36':  [45.4128, -122.5712],   // Clackamas, OR
+  '69':  [40.7608, -111.8910],   // Salt Lake City, UT
+  '73':  [33.4484, -112.0740],   // Phoenix, AZ
+  '76':  [35.0844, -106.6504],   // Albuquerque, NM
+  '82':  [47.6588, -117.4260],   // Spokane, WA
+  '135': [36.1716, -115.1391],   // Las Vegas, NV
+};
+
+// Hall-location markers — sit on each local's actual union-hall city
+// with the full "Local NN" label.
 (function(){
   Object.keys(LOCALS).forEach(function(lid){
-    var l=LOCALS[lid];
-    if(!l||!Array.isArray(l.center)||l.center.length<2)return;
+    var l=LOCALS[lid];if(!l)return;
+    var coord=HALL_COORDS[String(lid)]||l.center;
+    if(!Array.isArray(coord)||coord.length<2)return;
     var color=l.color||'#2563eb';
-    var labelTxt='L'+String(lid);
     var html='<div style="pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);'
       +'filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))">'
-      +'<div style="width:18px;height:18px;background:'+color+';border:2px solid #fff;'
+      +'<div style="width:16px;height:16px;background:'+color+';border:2px solid #fff;'
         +'border-radius:50%;box-shadow:0 0 0 1px '+color+'66;margin:0 auto"></div>'
       +'<div style="background:#fff;color:'+color+';font-family:Space Mono,monospace;'
-        +'font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;border:1.5px solid '+color+';'
-        +'margin-top:3px;white-space:nowrap;text-align:center;letter-spacing:0">'
-        +escSb(labelTxt)+'</div></div>';
-    L.marker(l.center,{
+        +'font-size:13px;font-weight:700;padding:2px 8px;border-radius:5px;border:1.5px solid '+color+';'
+        +'margin-top:4px;white-space:nowrap;text-align:center;letter-spacing:0">'
+        +escSb('Local '+String(lid))+'</div></div>';
+    L.marker(coord,{
       icon:L.divIcon({className:'',html:html,iconSize:[0,0],iconAnchor:[0,0]}),
-      title:(l.name||'Local '+lid)+(l.hallCity?' — '+l.hallCity:'')
+      title:(l.name||'Local '+lid)+(l.hallCity?' — '+l.hallCity:''),
+      zIndexOffset:600
     }).addTo(map).on('click',function(){ if(typeof flyTo==='function')flyTo(lid); });
+  });
+})();
+
+// Territory labels — one bold "Local NN" at the centroid of each local's
+// colored county group. Uses bbox-center averages from GEO features.
+(function(){
+  // Bucket county centroids by local
+  var perLocal={};
+  GEO.features.forEach(function(f){
+    var lid=FL[String(f.id)];
+    if(!lid)return;
+    var coords=f.geometry&&f.geometry.coordinates;
+    if(!coords)return;
+    // Walk the polygon rings to get a bbox
+    var minLat=Infinity,maxLat=-Infinity,minLng=Infinity,maxLng=-Infinity;
+    function visit(pt){var lng=pt[0],lat=pt[1];if(lat<minLat)minLat=lat;if(lat>maxLat)maxLat=lat;if(lng<minLng)minLng=lng;if(lng>maxLng)maxLng=lng;}
+    function walk(arr){
+      if(typeof arr[0]==='number'){visit(arr);return;}
+      arr.forEach(walk);
+    }
+    walk(coords);
+    if(!isFinite(minLat))return;
+    var cy=(minLat+maxLat)/2, cx=(minLng+maxLng)/2;
+    if(!perLocal[lid])perLocal[lid]={sLat:0,sLng:0,n:0,minLat:Infinity,maxLat:-Infinity,minLng:Infinity,maxLng:-Infinity};
+    var p=perLocal[lid];
+    p.sLat+=cy;p.sLng+=cx;p.n++;
+    if(minLat<p.minLat)p.minLat=minLat;if(maxLat>p.maxLat)p.maxLat=maxLat;
+    if(minLng<p.minLng)p.minLng=minLng;if(maxLng>p.maxLng)p.maxLng=maxLng;
+  });
+  Object.keys(perLocal).forEach(function(lid){
+    var p=perLocal[lid];
+    if(!p.n)return;
+    var lat=p.sLat/p.n, lng=p.sLng/p.n;
+    var name='Local '+String(lid);
+    // White text with a stroke that reads cleanly over any county color.
+    var html='<div style="pointer-events:none;transform:translate(-50%,-50%);font-family:Space Mono,monospace;'
+      +'font-size:16px;font-weight:700;color:#fff;letter-spacing:0;white-space:nowrap;'
+      +'text-shadow:0 0 3px #000,0 0 3px #000,0 0 5px #000,0 1px 2px rgba(0,0,0,.6);'
+      +'-webkit-text-stroke:0.5px rgba(0,0,0,.65)">'+escSb(name)+'</div>';
+    L.marker([lat,lng],{
+      icon:L.divIcon({className:'',html:html,iconSize:[0,0],iconAnchor:[0,0]}),
+      interactive:false,zIndexOffset:300
+    }).addTo(map);
   });
 })();
 
