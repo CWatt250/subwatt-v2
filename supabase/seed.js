@@ -1,127 +1,142 @@
 // ==========================================================================
-// SubWatt v2 — Seed script
-// One-time migration from ~/Dev/subwatt-v1/data.json to Supabase.
+// SubWatt v2 — Seed script (fixed for actual schema)
+// One-time migration from data.json to Supabase.
 //
 // Usage:
-//   1. Create a Supabase project at supabase.com
-//   2. Run schema.sql in the SQL Editor
-//   3. Get your anon key + project URL from Settings → API
-//   4. Run this script:
-//      node supabase/seed.js <supabase-url> <anon-key>
+//   node supabase/seed.js <supabase-url> <service-role-key>
 //
+// Service role key: Supabase → Settings → API → service_role secret
 // Requires: npm install @supabase/supabase-js
 // ==========================================================================
 
 const { createClient } = require('@supabase/supabase-js');
-const path = require('path');
-const fs = require('fs');
+const path    = require('path');
+const fs      = require('fs');
+const undici  = require('undici');
 
-const SUPABASE_URL = process.argv[2];
-const SUPABASE_ANON_KEY = process.argv[3];
+// Some Supabase regions cold-start slowly (locals 7/36 were hitting the
+// default 10s TCP connect timeout). Widen both connect and headers timeouts.
+undici.setGlobalDispatcher(new undici.Agent({
+  connect:        { timeout: 60_000 },
+  headersTimeout: 60_000,
+  bodyTimeout:    60_000,
+}));
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Usage: node supabase/seed.js <supabase-url> <anon-key>');
+const SUPABASE_URL     = process.argv[2];
+const SUPABASE_SVC_KEY = process.argv[3];
+
+if (!SUPABASE_URL || !SUPABASE_SVC_KEY) {
+  console.error('Usage: node supabase/seed.js <supabase-url> <service-role-key>');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Custom fetch with 60s timeout — the default 10s undici timeout was firing
+// on slow-cold Supabase responses (some upserts take 15s+).
+const slowFetch = (url, opts = {}) => fetch(url, { ...opts, signal: AbortSignal.timeout(60000) });
 
-// Load data.json
+const supabase = createClient(SUPABASE_URL, SUPABASE_SVC_KEY, {
+  global: { fetch: slowFetch },
+});
+
 const dataPath = path.resolve(__dirname, '..', 'data.json');
-const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+const data     = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+
+// Scalar fields stored as dedicated columns — everything else goes in rate_config
+const SCALAR_KEYS = new Set([
+  'name','color','hallCity','address','phone','bm',
+  'cba','jurisdiction','subsNote','center','zoom','calcKind'
+]);
 
 async function seed() {
-  console.log('Starting seed...');
+  console.log('Starting seed...\n');
 
-  // ---- Insert locals ----
-  const localIds = Object.keys(data.locals);
-  for (const id of localIds) {
-    const l = data.locals[id];
+  // -- 1. Locals ---------------------------------------------------------------
+  for (const idStr of Object.keys(data.locals)) {
+    const l = data.locals[idStr];
 
-    // Extract scalar fields kept at the top level
-    const localRow = {
-      id,
-      name: l.name || `Local ${id}`,
-      color: l.color || '#2563eb',
-      hall_city: l.hallCity || '',
-      address: l.address || '',
-      phone: l.phone || '',
-      bm: l.bm || '',
-      cba: l.cba || '',
-      jurisdiction: l.jurisdiction || '',
-      subs_note: l.subsNote || '',
-      center: l.center ? JSON.stringify(l.center) : '[0,0]',
-      zoom: l.zoom ?? 7,
-      calc_kind: l.calcKind || 'zones',
-      // The rest of the local structure goes in rate_config as JSONB
-      rate_config: buildRateConfig(l),
-    };
-
-    console.log(`  Seeding local ${id} — ${localRow.name}`);
-    const { error } = await supabase.from('locals').upsert(localRow, {
-      onConflict: 'id',
-      ignoreDuplicates: false,
-    });
-    if (error) {
-      console.error(`  Failed to upsert local ${id}:`, error.message);
-      continue;
+    // Non-scalar fields (travelZones, dispatches, appendixA, etc.) go in rate_config
+    const rateConfig = {};
+    for (const [k, v] of Object.entries(l)) {
+      if (!SCALAR_KEYS.has(k)) rateConfig[k] = v;
     }
 
-    // ---- Insert dispatch points ----
+    const localRow = {
+      id:           idStr,            // TEXT column - keep as string
+      name:         l.name         || 'Local ' + idStr,
+      color:        l.color        || '#2563eb',
+      hall_city:    l.hallCity     || '',
+      address:      l.address      || '',
+      phone:        l.phone        || '',
+      bm:           l.bm           || '',
+      cba:          l.cba          || '',
+      jurisdiction: l.jurisdiction || '',
+      subs_note:    l.subsNote     || '',
+      center:       l.center       || null,   // jsonb - pass array/object directly
+      zoom:         l.zoom         != null ? l.zoom : 7,
+      calc_kind:    l.calcKind     || 'zones',
+      rate_config:  rateConfig,               // jsonb - plain object, no stringify
+    };
+
+    console.log('Seeding local ' + idStr + ' - ' + localRow.name);
+    const { error } = await supabase
+      .from('locals')
+      .upsert(localRow, { onConflict: 'id' });
+
+    if (error) {
+      console.error('  FAILED: ' + error.message);
+      if (error.details) console.error('  details: ' + error.details);
+    } else {
+      console.log('  OK');
+    }
+
+    // Dispatch points
     if (Array.isArray(l.dispatches)) {
       for (const dp of l.dispatches) {
         if (!dp.name) continue;
-        const { error: dpErr } = await supabase.from('dispatch_points').insert({
-          local_id: id,
-          name: dp.name,
-          lat: dp.lat,
-          lng: dp.lng,
-        });
-        if (dpErr) {
-          console.error(`    Failed to insert dispatch "${dp.name}":`, dpErr.message);
+        const { error: dpErr } = await supabase
+          .from('dispatch_points')
+          .insert({ local_id: idStr, name: dp.name, lat: dp.lat, lng: dp.lng });
+        if (dpErr && !dpErr.message.includes('duplicate')) {
+          console.error('    dispatch "' + dp.name + '": ' + dpErr.message);
         }
       }
     }
   }
 
-  // ---- Hanford (top-level, inserted as a special local) ----
-  if (data.hanford) {
-    const hanfordRow = {
-      id: '__hanford__',
-      name: 'Hanford (top-level)',
-      color: '#ef4444',
-      hall_city: 'Shared Hanford override',
-      calc_kind: 'zones',
-      rate_config: JSON.stringify(data.hanford),
-    };
-    console.log('  Seeding Hanford top-level override');
-    const { error } = await supabase.from('locals').upsert(hanfordRow, {
-      onConflict: 'id',
-      ignoreDuplicates: false,
-    });
-    if (error) console.error('  Failed to upsert Hanford:', error.message);
-  }
+  // -- 2. Global config --------------------------------------------------------
+  console.log('\nSeeding global_config...');
 
-  console.log('Seed complete!');
-}
+  const configRows = [
+    { key: 'fipsToLocal', value: data.fipsToLocal },
+    { key: 'stateAbbr',   value: data.stateAbbr   },
+    { key: 'hanford',     value: data.hanford      },
+  ];
 
-function buildRateConfig(l) {
-  // Extract only the non-scalar, non-dispatches fields that should go into rate_config.
-  // Scalar fields are already stored as top-level columns.
-  const config = {};
-  const SCALAR_KEYS = new Set([
-    'name', 'color', 'hallCity', 'address', 'phone', 'bm', 'cba',
-    'jurisdiction', 'subsNote', 'center', 'zoom', 'calcKind', 'dispatches',
-  ]);
-  for (const [key, val] of Object.entries(l)) {
-    if (!SCALAR_KEYS.has(key)) {
-      config[key] = val;
+  for (const row of configRows) {
+    if (row.value == null) {
+      console.log('  SKIP "' + row.key + '" - not found in data.json');
+      continue;
+    }
+
+    const size = JSON.stringify(row.value).length;
+    console.log('  "' + row.key + '" (~' + (size/1024).toFixed(1) + ' KB)');
+
+    const { error } = await supabase
+      .from('global_config')
+      .upsert(row, { onConflict: 'key' });
+
+    if (error) {
+      console.error('  FAILED ' + row.key + ': ' + error.message);
+      if (error.details) console.error('  details: ' + error.details);
+    } else {
+      console.log('  OK ' + row.key);
     }
   }
-  return JSON.stringify(config);
+
+  console.log('\nSeed complete. Check Supabase -> Table Editor to verify.');
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err);
+seed().catch(function(err) {
+  console.error('Seed crashed:', err);
   process.exit(1);
 });

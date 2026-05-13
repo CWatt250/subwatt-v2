@@ -257,7 +257,7 @@ function buildLocalCard(row){
   head.innerHTML=
     '<div class="local-swatch" style="background:'+esc(row.color)+'"></div>'
     +'<div><div class="local-name">Local '+esc(String(row.id))+'</div>'
-    +'<div class="local-region">'+esc(row.region||'')+'</div></div>'
+    +'<div class="local-region">'+esc(row.hall_city||'')+'</div></div>'
     +'<div class="local-chevron">&#8964;</div>';
   head.addEventListener('click',function(){card.classList.toggle('open');});
 
@@ -273,7 +273,7 @@ function buildLocalCard(row){
   saveBar.innerHTML=
     '<span class="save-msg">Unsaved changes</span>'
     +'<span class="save-status" id="save-status-'+row.id+'"></span>'
-    +'<button class="btn btn-success btn-sm" onclick="saveLocal('+row.id+')">Save changes</button>';
+    +'<button class="btn btn-success btn-sm" onclick="saveLocal(\''+row.id+'\')">Save changes</button>';
   body.appendChild(saveBar);
 
   card.appendChild(head);
@@ -285,81 +285,74 @@ function buildRateEditor(row){
   var cfg=row.rate_config||{};
   var html='';
 
-  // ── Travel zones ────────────────────────────────────────────────────────────
-  if(cfg.travelZones&&cfg.travelZones.length){
+  // ── Travel zones (Local 7, 36, 82) ─────────────────────────────────────────
+  if(Array.isArray(cfg.travelZones)&&cfg.travelZones.length){
     html+='<div class="rate-section"><div class="rate-section-label">Travel Zones</div>';
-    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Description</th><th>Rate ($/day)</th></tr></thead><tbody>';
+    var hasCv=cfg.travelZones.some(function(z){return z.cvAmount!==undefined;});
+    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Miles</th><th>Amount ($/day)</th>'+(hasCv?'<th>CV Amount ($/day)</th>':'')+'<th>Rate label</th></tr></thead><tbody>';
     cfg.travelZones.forEach(function(z,i){
+      var amt=(z.amount!==undefined&&z.amount!==null)?z.amount:0;
       html+='<tr>'
-        +'<td class="mono">'+esc(z.zone||String(i+1))+'</td>'
-        +'<td><input class="zone-label-input" data-path="travelZones.'+i+'.desc" value="'+esc(z.desc||'')+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="travelZones.'+i+'.rate" value="'+esc(String(z.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td class="mono">'+esc(z.label||String(i+1))+'</td>'
+        +'<td style="color:#64748b">'+esc(z.miles||'')+'</td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="travelZones.'+i+'.amount" value="'+esc(String(amt))+'" onchange="markChanged(\''+row.id+'\',this)"/></td>';
+      if(hasCv){
+        var cvAmt=(z.cvAmount!==undefined&&z.cvAmount!==null)?z.cvAmount:0;
+        html+='<td><input class="rate-input" type="number" step="0.01" min="0" data-path="travelZones.'+i+'.cvAmount" value="'+esc(String(cvAmt))+'" onchange="markChanged(\''+row.id+'\',this)"/></td>';
+      }
+      html+='<td><input class="zone-label-input" data-path="travelZones.'+i+'.rate" value="'+esc(z.rate||'')+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
         +'</tr>';
     });
     html+='</tbody></table></div>';
   }
 
-  // ── Appendix A zones ────────────────────────────────────────────────────────
-  if(cfg.appendixA&&cfg.appendixA.length){
-    html+='<div class="rate-section"><div class="rate-section-label">Appendix A</div>';
-    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Description</th><th>Rate ($/day)</th></tr></thead><tbody>';
-    cfg.appendixA.forEach(function(z,i){
+  // ── Appendix A zones (Local 7) ─────────────────────────────────────────────
+  if(cfg.appendixA&&Array.isArray(cfg.appendixA.zones)&&cfg.appendixA.zones.length){
+    html+='<div class="rate-section"><div class="rate-section-label">Appendix A — '+esc(cfg.appendixA.label||'')+'</div>';
+    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Miles</th><th>Amount ($/day)</th><th>Rate label</th></tr></thead><tbody>';
+    cfg.appendixA.zones.forEach(function(z,i){
+      var amt=(z.amount!==undefined&&z.amount!==null)?z.amount:0;
       html+='<tr>'
-        +'<td class="mono">'+esc(z.zone||String(i+1))+'</td>'
-        +'<td><input class="zone-label-input" data-path="appendixA.'+i+'.desc" value="'+esc(z.desc||'')+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="appendixA.'+i+'.rate" value="'+esc(String(z.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td class="mono">'+esc(z.label||String(i+1))+'</td>'
+        +'<td style="color:#64748b">'+esc(z.miles||'')+'</td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="appendixA.zones.'+i+'.amount" value="'+esc(String(amt))+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
+        +'<td><input class="zone-label-input" data-path="appendixA.zones.'+i+'.rate" value="'+esc(z.rate||'')+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
         +'</tr>';
     });
     html+='</tbody></table></div>';
   }
 
-  // ── Mileage brackets ────────────────────────────────────────────────────────
-  if(cfg.mileageBrackets&&cfg.mileageBrackets.length){
-    html+='<div class="rate-section"><div class="rate-section-label">Mileage Brackets</div>';
-    html+='<table class="rate-table"><thead><tr><th>Miles from</th><th>Miles to</th><th>Rate ($/day)</th></tr></thead><tbody>';
-    cfg.mileageBrackets.forEach(function(b,i){
-      html+='<tr>'
-        +'<td><input class="rate-input" type="number" step="1" min="0" data-path="mileageBrackets.'+i+'.from" value="'+esc(String(b.from||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'<td><input class="rate-input" type="number" step="1" min="0" data-path="mileageBrackets.'+i+'.to" value="'+esc(String(b.to||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="mileageBrackets.'+i+'.rate" value="'+esc(String(b.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'</tr>';
-    });
-    html+='</tbody></table></div>';
-  }
-
-  // ── Per diem ─────────────────────────────────────────────────────────────────
-  if(cfg.perDiem){
-    html+='<div class="rate-section"><div class="rate-section-label">Per Diem</div>';
+  // ── Mileage calc (Local 7) ──────────────────────────────────────────────────
+  if(cfg.mileageCalc){
+    var mc=cfg.mileageCalc;
+    html+='<div class="rate-section"><div class="rate-section-label">Mileage Calculation</div>';
     html+='<table class="rate-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
-    var pd=cfg.perDiem;
-    if(pd.amount!==undefined){
-      html+='<tr><td>Daily amount ($)</td><td><input class="rate-input" type="number" step="0.01" min="0" data-path="perDiem.amount" value="'+esc(String(pd.amount||0))+'" onchange="markChanged('+row.id+',this)"/></td></tr>';
-    }
-    if(pd.note!==undefined){
-      html+='<tr><td>Note</td><td><input class="zone-label-input" style="width:280px" data-path="perDiem.note" value="'+esc(pd.note||'')+'" onchange="markChanged('+row.id+',this)"/></td></tr>';
-    }
-    html+='</tbody></table></div>';
-  }
-
-  // ── Hanford HSSA ─────────────────────────────────────────────────────────────
-  if(cfg.hanford&&cfg.hanford.areas){
-    html+='<div class="rate-section"><div class="rate-section-label">Hanford HSSA</div>';
-    html+='<table class="rate-table"><thead><tr><th>Area</th><th>Rate ($/day)</th></tr></thead><tbody>';
-    Object.keys(cfg.hanford.areas).forEach(function(areaId){
-      var a=cfg.hanford.areas[areaId];
-      html+='<tr>'
-        +'<td>'+esc(a.name||areaId)+'</td>'
-        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="hanford.areas.'+areaId+'.rate" value="'+esc(String(a.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
-        +'</tr>';
+    var rows=[
+      ['Free zone max (mi)','freeMaxMi','number',1],
+      ['Mileage zone max (mi)','mileageMaxMi','number',1],
+      ['Mileage rate ($/mi)','mileageRate','number',0.01],
+      ['Mileage multiplier','mileageMultiplier','number',0.1],
+      ['Per diem amount ($/day)','perDiemAmount','number',0.01],
+    ];
+    rows.forEach(function(r){
+      if(mc[r[1]]===undefined)return;
+      html+='<tr><td>'+esc(r[0])+'</td><td><input class="rate-input" type="number" step="'+r[3]+'" min="0" data-path="mileageCalc.'+r[1]+'" value="'+esc(String(mc[r[1]]))+'" onchange="markChanged(\''+row.id+'\',this)"/></td></tr>';
     });
     html+='</tbody></table></div>';
   }
 
-  if(!html) html='<div class="empty-state" style="padding:16px">No editable rate fields found in rate_config.<br>Check the seed data structure.</div>';
+  if(!html) html='<div class="empty-state" style="padding:16px">No editable rate fields found in rate_config.</div>';
   return html;
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function diffKeys(a,b){
+  a=a||{};b=b||{};var keys={},out=[];
+  Object.keys(a).forEach(function(k){keys[k]=1;});
+  Object.keys(b).forEach(function(k){keys[k]=1;});
+  Object.keys(keys).forEach(function(k){if(JSON.stringify(a[k])!==JSON.stringify(b[k]))out.push(k);});
+  return out.join(', ');
+}
 
 // ── Change tracking ───────────────────────────────────────────────────────────
 var PENDING={};
@@ -460,19 +453,20 @@ async function saveLocal(localId){
 async function loadAudit(){
   var container=document.getElementById('audit-container');
   container.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading…</div>';
-  var result=await supa.from('audit_log').select('*').order('changed_at',{ascending:false}).limit(50);
+  var result=await supa.from('audit_log').select('*').order('created_at',{ascending:false}).limit(50);
   if(result.error){container.innerHTML='<div class="empty-state">Error: '+result.error.message+'</div>';return;}
   if(!result.data||!result.data.length){container.innerHTML='<div class="empty-state">No changes recorded yet.</div>';return;}
 
-  var html='<table class="audit-table"><thead><tr><th>When</th><th>Local</th><th>Field</th><th>Note</th></tr></thead><tbody>';
+  var html='<table class="audit-table"><thead><tr><th>When</th><th>Local</th><th>By</th><th>Changed</th></tr></thead><tbody>';
   result.data.forEach(function(row){
-    var dt=new Date(row.changed_at);
+    var dt=new Date(row.created_at);
     var dtStr=dt.toLocaleDateString()+'  '+dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    var changed=diffKeys(row.old_data,row.new_data);
     html+='<tr>'
       +'<td class="mono">'+esc(dtStr)+'</td>'
       +'<td>'+esc(row.local_id?'Local '+row.local_id:'—')+'</td>'
-      +'<td><span class="tag tag-update">'+esc(row.field||'rate_config')+'</span></td>'
-      +'<td style="color:#64748b">'+esc(row.note||'—')+'</td>'
+      +'<td style="color:#64748b">'+esc(row.changed_by||'—')+'</td>'
+      +'<td><span class="tag tag-update">'+esc(changed||'rate_config')+'</span></td>'
       +'</tr>';
   });
   html+='</tbody></table>';

@@ -337,7 +337,8 @@ async function loadData(){
 
     var appData={locals:{},fipsToLocal:{},stateAbbr:{},hanford:{}};
     locRows.forEach(function(row){
-      appData.locals[row.id]=Object.assign({id:row.id,name:row.name,region:row.region,color:row.color},row.rate_config);
+      var base={id:row.id,name:row.name,color:row.color,hallCity:row.hall_city,address:row.address,phone:row.phone,bm:row.bm,cba:row.cba,jurisdiction:row.jurisdiction,subsNote:row.subs_note,center:row.center,zoom:row.zoom,calcKind:row.calc_kind};
+      appData.locals[row.id]=Object.assign(base,row.rate_config||{});
     });
     cfgRows.forEach(function(row){
       if(row.key==='fipsToLocal')appData.fipsToLocal=row.value;
@@ -363,7 +364,7 @@ async function loadData(){
 
 <script>
 function bootApp(data){
-var MAPBOX_TOKEN='pk.eyJ1IjoiY3dhdHQtMjUwIiwiYSI6ImNtb2FjZ2k1ODA1NnEyd29pdjVxOWFxcTcifQ.'+'iAwWLU3RLVav57dM4UuisQ';
+var MAPBOX_TOKEN='pk.eyJ1IjoiY3dhdHQtMjUwIiwiYSI6ImNtb2FjZ2k1ODA1NnEyd29pdjVxOWFxcTcifQ.iAwWLU3RLVav57dM4UuisQ';
 var ROUTE_CACHE={};
 var SESSION_TOKEN=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():(String(Date.now())+Math.random());
 var LOCALS=data.locals;
