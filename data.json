@@ -1,0 +1,730 @@
+{
+  "version": 1,
+  "locals": {
+    "7": {
+      "name": "Local 7",
+      "color": "#3dd68c",
+      "hallCity": "Tukwila, WA",
+      "address": "14675 Interurban Ave S, Ste. 103, Tukwila, WA 98168",
+      "phone": "(206) 812-0777",
+      "bm": "Todd Mitchell, Business Manager",
+      "cba": "CBA 6/1/2024–5/31/2030 · Rates effective 6/1/2024",
+      "jurisdiction": "Western Washington: Chelan, Clallam, Douglas, Grays Harbor, Island, Jefferson, King, Kitsap, Kittitas, Lewis, Mason, Okanogan, Pacific, Pierce, San Juan, Skagit, Snohomish, Thurston, Whatcom, and Yakima counties.",
+      "subsNote": "Residency free zone: resident 30+ days within 40 mi of jobsite. Port Townsend and Sequim: employer provides lodging (no travel pay).",
+      "center": [
+        47.6,
+        -122.3
+      ],
+      "zoom": 7,
+      "dispatches": [
+        {
+          "name": "Seattle",
+          "lat": 47.6062,
+          "lng": -122.3321
+        },
+        {
+          "name": "Tacoma",
+          "lat": 47.2529,
+          "lng": -122.4443
+        }
+      ],
+      "calcKind": "mileage",
+      "travelZones": [
+        {
+          "label": "Free Zone",
+          "miles": "0–20 mi beyond Seattle/Tacoma city limits",
+          "rate": "Free",
+          "note": ""
+        },
+        {
+          "label": "Mileage Zone",
+          "miles": "21–70 mi beyond city limits",
+          "rate": "IRS rate/mi",
+          "note": "$0.67/mi (2024) · round-trip from free zone boundary · no mileage if company vehicle"
+        },
+        {
+          "label": "Per Diem Zone",
+          "miles": "71+ mi beyond city limits",
+          "rate": "$150/day",
+          "note": "All workers regardless of transport"
+        }
+      ],
+      "mileageCalc": {
+        "freeMaxMi": 20,
+        "mileageMaxMi": 70,
+        "mileageRate": 0.67,
+        "mileageMultiplier": 2,
+        "perDiemAmount": 150,
+        "freeLabel": "Free Zone",
+        "freeNote": "Within 20 mi of city limits",
+        "mileageLabel": "Mileage Zone",
+        "mileageNoteSuffix": "(round-trip from free zone edge)",
+        "perDiemLabel": "Per Diem Zone",
+        "perDiemNote": "$150/day — all workers regardless of transport"
+      },
+      "appendixA": {
+        "label": "Appendix A — Central WA Work Preservation (Chelan, Douglas, Kittitas, Okanogan, Yakima)",
+        "fipsOverride": {
+          "53007": 1,
+          "53017": 1,
+          "53037": 1,
+          "53047": 1,
+          "53077": 1
+        },
+        "zones": [
+          {
+            "label": "Zone 1",
+            "miles": "0–20 mi",
+            "rate": "Free",
+            "maxMi": 20,
+            "amount": 0,
+            "calcLabel": "Zone 1 — Free",
+            "calcNote": "No travel pay"
+          },
+          {
+            "label": "Zone 2",
+            "miles": "21–30 mi",
+            "rate": "$20/day",
+            "maxMi": 30,
+            "amount": 20,
+            "calcLabel": "Zone 2",
+            "calcNote": ""
+          },
+          {
+            "label": "Zone 3",
+            "miles": "31–40 mi",
+            "rate": "$30/day",
+            "maxMi": 40,
+            "amount": 30,
+            "calcLabel": "Zone 3",
+            "calcNote": ""
+          },
+          {
+            "label": "Zone 4",
+            "miles": "41–50 mi",
+            "rate": "$40/day",
+            "maxMi": 50,
+            "amount": 40,
+            "calcLabel": "Zone 4",
+            "calcNote": ""
+          },
+          {
+            "label": "Zone 5",
+            "miles": "51–60 mi",
+            "rate": "$50/day",
+            "maxMi": 60,
+            "amount": 50,
+            "calcLabel": "Zone 5",
+            "calcNote": ""
+          },
+          {
+            "label": "Zone 6",
+            "miles": "61–70 mi",
+            "rate": "$60/day",
+            "maxMi": 70,
+            "amount": 60,
+            "calcLabel": "Zone 6",
+            "calcNote": ""
+          },
+          {
+            "label": "Zone 7",
+            "miles": "71+ mi",
+            "rate": "Per Diem ($150)",
+            "maxMi": null,
+            "amount": 150,
+            "calcLabel": "Zone 7 — Per Diem",
+            "calcNote": ""
+          }
+        ]
+      }
+    },
+    "36": {
+      "name": "Local 36",
+      "color": "#f5a623",
+      "hallCity": "Clackamas, OR",
+      "address": "16076 SE Evelyn St, Clackamas, OR 97015",
+      "phone": "(503) 255-2692",
+      "bm": "Ron Mathis, Business Manager",
+      "cba": "Rates effective 3/23/2026",
+      "jurisdiction": "Oregon statewide and SW Washington: Wahkiakum, Cowlitz, Clark, Skamania, and Klickitat counties.",
+      "subsNote": "Zones measured from City Hall in Portland, Medford, Eugene, Bend, or Hermiston (shortest Google Maps route). Zone 5: $160/day overnight or $90/day drive-only. 30-mi residency free zone from City Hall of Medford/Eugene/Bend/Hermiston. Coastal resort towns in Zone 3 get Zone 5 rate. Zone 5 has a 10-mi free zone from lodging/nearest town; IRS mileage paid beyond 20 mi round-trip.",
+      "center": [
+        44,
+        -121.5
+      ],
+      "zoom": 6,
+      "dispatches": [
+        {
+          "name": "Portland, OR",
+          "lat": 45.5051,
+          "lng": -122.675
+        },
+        {
+          "name": "Medford, OR",
+          "lat": 42.3265,
+          "lng": -122.8756
+        },
+        {
+          "name": "Eugene, OR",
+          "lat": 44.0521,
+          "lng": -123.0868
+        },
+        {
+          "name": "Bend, OR",
+          "lat": 44.0582,
+          "lng": -121.3153
+        },
+        {
+          "name": "Hermiston, OR",
+          "lat": 45.8401,
+          "lng": -119.2895
+        }
+      ],
+      "calcKind": "zones_cv",
+      "travelZones": [
+        {
+          "label": "Zone 1",
+          "miles": "0–30 mi",
+          "rate": "Free",
+          "cvRate": "Free",
+          "maxMi": 30,
+          "amount": 0,
+          "cvAmount": 0,
+          "calcLabel": "Zone 1 — Free",
+          "calcNote": "No travel pay",
+          "cvCalcNote": "No travel pay"
+        },
+        {
+          "label": "Zone 2",
+          "miles": "31–50 mi",
+          "rate": "$30/day",
+          "cvRate": "$19/day",
+          "maxMi": 50,
+          "amount": 30,
+          "cvAmount": 19,
+          "calcLabel": "Zone 2",
+          "calcNote": "",
+          "cvCalcNote": "Co. vehicle rate (verify current)"
+        },
+        {
+          "label": "Zone 3",
+          "miles": "51–70 mi",
+          "rate": "$65/day",
+          "cvRate": "$29/day",
+          "maxMi": 70,
+          "amount": 65,
+          "cvAmount": 29,
+          "calcLabel": "Zone 3",
+          "calcNote": "",
+          "cvCalcNote": "Co. vehicle rate (verify current)"
+        },
+        {
+          "label": "Zone 4",
+          "miles": "71–100 mi",
+          "rate": "$85/day",
+          "cvRate": "$43/day",
+          "maxMi": 100,
+          "amount": 85,
+          "cvAmount": 43,
+          "calcLabel": "Zone 4",
+          "calcNote": "",
+          "cvCalcNote": "Co. vehicle rate (verify current)"
+        },
+        {
+          "label": "Zone 5",
+          "miles": "100+ mi",
+          "rate": "$160/day",
+          "cvRate": "Zone 4 rate if driven / Zone 5 if stay",
+          "maxMi": null,
+          "amount": 160,
+          "cvAmount": 135,
+          "altAmount": 90,
+          "cvAltAmount": 75,
+          "calcLabel": "Zone 5",
+          "calcNote": "$160/day stay overnight — or $90/day drive-only",
+          "cvCalcNote": "$135/day stay overnight — or $75/day if driven daily"
+        }
+      ]
+    },
+    "82": {
+      "name": "Local 82",
+      "color": "#4a9eff",
+      "hallCity": "Spokane, WA",
+      "address": "4002 E Broadway Ave, Spokane, WA 99202",
+      "phone": "(509) 534-1590",
+      "bm": "Rory Homes, Business Manager",
+      "cba": "CBA 8/1/2023–7/31/2027 · Rates effective 8/1/2025",
+      "jurisdiction": "Eastern Washington (19 counties east of Cascade crest), Northern Idaho (10 counties north of the Salmon River), and all of Montana (56 counties).",
+      "subsNote": "Zones measured from employee’s declared residence city hall. Coeur d’Alene, ID is free zone for Spokane residents. Mileage: $0.66/mi (IRS rate), max $400 beginning/end of job.",
+      "center": [
+        47,
+        -112
+      ],
+      "zoom": 5,
+      "dispatches": [
+        {
+          "name": "Spokane, WA",
+          "lat": 47.6588,
+          "lng": -117.426
+        },
+        {
+          "name": "Pasco, WA",
+          "lat": 46.2396,
+          "lng": -119.1006
+        }
+      ],
+      "calcKind": "zones",
+      "travelZones": [
+        {
+          "label": "Zone 1–2",
+          "miles": "0–30 mi from dispatch",
+          "rate": "Free",
+          "note": "",
+          "maxMi": 30,
+          "amount": 0,
+          "calcLabel": "Zone 1–2 — Free",
+          "calcNote": "No travel pay"
+        },
+        {
+          "label": "Zone 3",
+          "miles": "30–40 mi",
+          "rate": "$30/day",
+          "note": "$3.75/hr equiv.",
+          "maxMi": 40,
+          "amount": 30,
+          "calcLabel": "Zone 3",
+          "calcNote": ""
+        },
+        {
+          "label": "Zone 4",
+          "miles": "40–50 mi",
+          "rate": "$40/day",
+          "note": "$5.00/hr equiv.",
+          "maxMi": 50,
+          "amount": 40,
+          "calcLabel": "Zone 4",
+          "calcNote": ""
+        },
+        {
+          "label": "Zone 5",
+          "miles": "50–60 mi",
+          "rate": "$55/day",
+          "note": "$6.88/hr equiv.",
+          "maxMi": 60,
+          "amount": 55,
+          "calcLabel": "Zone 5",
+          "calcNote": ""
+        },
+        {
+          "label": "Zone 6",
+          "miles": "60–70 mi",
+          "rate": "$65/day",
+          "note": "$8.13/hr equiv.",
+          "maxMi": 70,
+          "amount": 65,
+          "calcLabel": "Zone 6",
+          "calcNote": ""
+        },
+        {
+          "label": "Zone 6+",
+          "miles": "70+ mi",
+          "rate": "$140/day",
+          "note": "Subsistence zone · incl. $35/day meals",
+          "maxMi": null,
+          "amount": 140,
+          "calcLabel": "Zone 6+ — Subsistence",
+          "calcNote": "Includes $35/day meals"
+        }
+      ]
+    }
+  },
+  "fipsToLocal": {
+    "16009": 82,
+    "16017": 82,
+    "16021": 82,
+    "16035": 82,
+    "16049": 82,
+    "16055": 82,
+    "16057": 82,
+    "16061": 82,
+    "16069": 82,
+    "16079": 82,
+    "30001": 82,
+    "30003": 82,
+    "30005": 82,
+    "30007": 82,
+    "30009": 82,
+    "30011": 82,
+    "30013": 82,
+    "30015": 82,
+    "30017": 82,
+    "30019": 82,
+    "30021": 82,
+    "30023": 82,
+    "30025": 82,
+    "30027": 82,
+    "30029": 82,
+    "30031": 82,
+    "30033": 82,
+    "30035": 82,
+    "30037": 82,
+    "30039": 82,
+    "30041": 82,
+    "30043": 82,
+    "30045": 82,
+    "30047": 82,
+    "30049": 82,
+    "30051": 82,
+    "30053": 82,
+    "30055": 82,
+    "30057": 82,
+    "30059": 82,
+    "30061": 82,
+    "30063": 82,
+    "30065": 82,
+    "30067": 82,
+    "30069": 82,
+    "30071": 82,
+    "30073": 82,
+    "30075": 82,
+    "30077": 82,
+    "30079": 82,
+    "30081": 82,
+    "30083": 82,
+    "30085": 82,
+    "30087": 82,
+    "30089": 82,
+    "30091": 82,
+    "30093": 82,
+    "30095": 82,
+    "30097": 82,
+    "30099": 82,
+    "30101": 82,
+    "30103": 82,
+    "30105": 82,
+    "30107": 82,
+    "30109": 82,
+    "30111": 82,
+    "41001": 36,
+    "41003": 36,
+    "41005": 36,
+    "41007": 36,
+    "41009": 36,
+    "41011": 36,
+    "41013": 36,
+    "41015": 36,
+    "41017": 36,
+    "41019": 36,
+    "41021": 36,
+    "41023": 36,
+    "41025": 36,
+    "41027": 36,
+    "41029": 36,
+    "41031": 36,
+    "41033": 36,
+    "41035": 36,
+    "41037": 36,
+    "41039": 36,
+    "41041": 36,
+    "41043": 36,
+    "41045": 36,
+    "41047": 36,
+    "41049": 36,
+    "41051": 36,
+    "41053": 36,
+    "41055": 36,
+    "41057": 36,
+    "41059": 36,
+    "41061": 36,
+    "41063": 36,
+    "41065": 36,
+    "41067": 36,
+    "41069": 36,
+    "41071": 36,
+    "53001": 82,
+    "53003": 82,
+    "53005": 82,
+    "53007": 7,
+    "53009": 7,
+    "53011": 36,
+    "53013": 82,
+    "53015": 36,
+    "53017": 7,
+    "53019": 82,
+    "53021": 82,
+    "53023": 82,
+    "53025": 82,
+    "53027": 7,
+    "53029": 7,
+    "53031": 7,
+    "53033": 7,
+    "53035": 7,
+    "53037": 7,
+    "53039": 36,
+    "53041": 7,
+    "53043": 82,
+    "53045": 7,
+    "53047": 7,
+    "53049": 7,
+    "53051": 82,
+    "53053": 7,
+    "53055": 7,
+    "53057": 7,
+    "53059": 36,
+    "53061": 7,
+    "53063": 82,
+    "53065": 82,
+    "53067": 7,
+    "53069": 36,
+    "53071": 82,
+    "53073": 7,
+    "53075": 82,
+    "53077": 7
+  },
+  "stateAbbr": {
+    "16": "ID",
+    "30": "MT",
+    "32": "NV",
+    "41": "OR",
+    "53": "WA",
+    "56": "WY"
+  },
+  "hanford": {
+    "areas": {
+      "100": {
+        "name": "100 Area",
+        "rate": 47,
+        "color": "#ef4444",
+        "desc": "Reactor row along Columbia River"
+      },
+      "300": {
+        "name": "300 Area",
+        "rate": 37,
+        "color": "#8b5cf6",
+        "desc": "Fuel fabrication & research · SE corner near Richland"
+      },
+      "400": {
+        "name": "400 Area",
+        "rate": 37,
+        "color": "#6366f1",
+        "desc": "Columbia Generating Station & FFTF"
+      },
+      "200E": {
+        "name": "200 East",
+        "rate": 44,
+        "color": "#ec4899",
+        "desc": "Central Plateau East · PUREX, tank farms"
+      },
+      "200W": {
+        "name": "200 West",
+        "rate": 45.5,
+        "color": "#f43f5e",
+        "desc": "Central Plateau West · T/U Plants, REDOX"
+      }
+    },
+    "geo": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {
+            "id": "300"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -119.289,
+                  46.355
+                ],
+                [
+                  -119.26,
+                  46.355
+                ],
+                [
+                  -119.255,
+                  46.38
+                ],
+                [
+                  -119.285,
+                  46.385
+                ],
+                [
+                  -119.289,
+                  46.355
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "id": "400"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -119.41,
+                  46.43
+                ],
+                [
+                  -119.35,
+                  46.43
+                ],
+                [
+                  -119.34,
+                  46.475
+                ],
+                [
+                  -119.405,
+                  46.48
+                ],
+                [
+                  -119.41,
+                  46.43
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "id": "200E"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -119.55,
+                  46.53
+                ],
+                [
+                  -119.45,
+                  46.53
+                ],
+                [
+                  -119.44,
+                  46.595
+                ],
+                [
+                  -119.545,
+                  46.6
+                ],
+                [
+                  -119.55,
+                  46.53
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "id": "200W"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -119.64,
+                  46.53
+                ],
+                [
+                  -119.555,
+                  46.53
+                ],
+                [
+                  -119.555,
+                  46.595
+                ],
+                [
+                  -119.635,
+                  46.6
+                ],
+                [
+                  -119.64,
+                  46.53
+                ]
+              ]
+            ]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {
+            "id": "100"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -119.68,
+                  46.63
+                ],
+                [
+                  -119.43,
+                  46.63
+                ],
+                [
+                  -119.35,
+                  46.72
+                ],
+                [
+                  -119.38,
+                  46.87
+                ],
+                [
+                  -119.52,
+                  46.88
+                ],
+                [
+                  -119.68,
+                  46.79
+                ],
+                [
+                  -119.695,
+                  46.7
+                ],
+                [
+                  -119.68,
+                  46.63
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    "labels": {
+      "100": [
+        46.77,
+        -119.53
+      ],
+      "300": [
+        46.37,
+        -119.272
+      ],
+      "400": [
+        46.455,
+        -119.375
+      ],
+      "200E": [
+        46.565,
+        -119.497
+      ],
+      "200W": [
+        46.565,
+        -119.597
+      ]
+    }
+  }
+}

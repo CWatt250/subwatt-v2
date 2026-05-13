@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SubWatt Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
+a{color:#2563eb}
+
+/* ── Layout ─────────────────────────── */
+#app{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+
+/* ── Topbar ─────────────────────────── */
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid #e2e8f0}
+.logo-mark{width:32px;height:32px;background:#fff;border:2px solid #2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(37,99,235,.18)}
+.logo-mark svg{width:18px;height:18px}
+.logo-title{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;letter-spacing:1px}
+.logo-title .sub{color:#2563eb}
+.logo-title .watt{color:#f97316}
+.logo-sub{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;color:#94a3b8;text-transform:uppercase;margin-top:2px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;padding:3px 8px}
+.btn{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;border-radius:6px;padding:6px 14px;cursor:pointer;border:1px solid;transition:all .15s;text-transform:uppercase}
+.btn-ghost{background:#f1f5f9;border-color:#e2e8f0;color:#374151}
+.btn-ghost:hover{background:#e2e8f0}
+.btn-primary{background:#2563eb;border-color:#1d4ed8;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:4px 10px;font-size:9px}
+.btn-success{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+.btn-success:hover{background:#d1fae5}
+
+/* ── Login ──────────────────────────── */
+#login-screen{display:flex;min-height:80vh;align-items:center;justify-content:center}
+.login-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:32px;width:100%;max-width:380px;box-shadow:0 4px 20px rgba(15,23,42,.07)}
+.login-card h2{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;margin-bottom:4px}
+.login-card p{font-size:12px;color:#64748b;margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:5px;letter-spacing:.3px}
+.field input{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+.field input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.login-err{background:#fee2e2;border:1px solid #fecaca;border-radius:6px;padding:8px 12px;font-size:11px;color:#991b1b;margin-bottom:14px;display:none}
+
+/* ── Section headers ────────────────── */
+.section-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.section-hd h2{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#0f172a}
+.section-hd::after{content:'';flex:1;height:1px;background:#e2e8f0}
+
+/* ── Local cards ────────────────────── */
+.local-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:16px;overflow:hidden}
+.local-card-head{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none}
+.local-card-head:hover{background:#f8fafc}
+.local-swatch{width:4px;height:36px;border-radius:2px;flex-shrink:0}
+.local-name{font-family:'Space Mono',monospace;font-size:14px;font-weight:700}
+.local-region{font-size:11px;color:#64748b;margin-top:2px}
+.local-chevron{margin-left:auto;color:#94a3b8;transition:transform .2s;font-size:16px;line-height:1}
+.local-card.open .local-chevron{transform:rotate(180deg)}
+.local-card-body{display:none;padding:0 16px 16px;border-top:1px solid #f1f5f9}
+.local-card.open .local-card-body{display:block}
+
+/* ── Rate tables ────────────────────── */
+.rate-section{margin-top:14px}
+.rate-section-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.rate-section-label::after{content:'';flex:1;height:1px;background:#f1f5f9}
+.rate-table{width:100%;border-collapse:collapse;font-size:12px}
+.rate-table th{text-align:left;padding:5px 8px;font-size:10px;font-weight:600;color:#64748b;border-bottom:1px solid #f1f5f9;letter-spacing:.3px}
+.rate-table td{padding:5px 8px;border-bottom:1px solid #f9fafb}
+.rate-table tr:last-child td{border-bottom:none}
+.rate-input{width:90px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-family:'Space Mono',monospace;text-align:right;outline:none;transition:border-color .15s}
+.rate-input:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+.rate-input.changed{border-color:#f59e0b;background:#fffbeb}
+.zone-label-input{width:160px;padding:4px 6px;border:1px solid #e2e8f0;border-radius:4px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+.zone-label-input:focus{border-color:#2563eb}
+
+/* ── Save bar ───────────────────────── */
+.save-bar{display:none;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;margin-top:12px}
+.save-bar.visible{display:flex}
+.save-msg{font-size:11px;color:#92400e;flex:1}
+.save-status{font-size:11px;font-family:'Space Mono',monospace}
+
+/* ── Audit log ──────────────────────── */
+.audit-table{width:100%;border-collapse:collapse;font-size:11px}
+.audit-table th{text-align:left;padding:6px 8px;font-size:10px;color:#64748b;border-bottom:1px solid #e2e8f0;font-weight:600;letter-spacing:.3px}
+.audit-table td{padding:6px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.audit-table tr:last-child td{border-bottom:none}
+.mono{font-family:'Space Mono',monospace;font-size:10px}
+.tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:.5px}
+.tag-update{background:#dbeafe;color:#1e40af}
+.tag-insert{background:#d1fae5;color:#065f46}
+
+/* ── Analytics ──────────────────────── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px}
+.stat-num{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#0f172a}
+.stat-label{font-size:10px;color:#64748b;margin-top:3px;letter-spacing:.3px}
+
+/* ── Toast ──────────────────────────── */
+#toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;font-size:12px;font-family:'Space Mono',monospace;padding:10px 16px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ── Loading ────────────────────────── */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:32px;color:#94a3b8;font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 2 L5 13.5 H11 L10 22 L19 9 H13 Z" fill="#f97316" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div class="logo-title"><span class="sub">SUB</span><span class="watt">WATT</span></div>
+      <div class="logo-sub">Admin</div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge" id="admin-badge" style="display:none"></span>
+      <button class="btn btn-ghost btn-sm" id="logout-btn" style="display:none" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Login screen -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h2>Admin Login</h2>
+      <p>SubWatt rate editor — authorized access only.</p>
+      <div class="login-err" id="login-err"></div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()" id="login-btn">Sign in</button>
+    </div>
+  </div>
+
+  <!-- Main editor (hidden until logged in) -->
+  <div id="editor-screen" style="display:none">
+
+    <!-- Rates section -->
+    <div class="section-hd"><h2>Rate Editor</h2></div>
+    <div id="locals-container"><div class="empty-state"><span class="spinner"></span>Loading locals…</div></div>
+
+    <!-- Audit log -->
+    <div style="margin-top:36px">
+      <div class="section-hd"><h2>Change History</h2><button class="btn btn-ghost btn-sm" onclick="loadAudit()">Refresh</button></div>
+      <div id="audit-container"><div class="empty-state"><span class="spinner"></span>Loading…</div></div>
+    </div>
+
+    <!-- Analytics -->
+    <div style="margin-top:36px">
+      <div class="section-hd"><h2>Usage Analytics</h2><button class="btn btn-ghost btn-sm" onclick="loadAnalytics()">Refresh</button></div>
+      <div id="analytics-container"><div class="empty-state"><span class="spinner"></span>Loading…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SUPA_URL='https://qhrpmpbjeyhgryssnjhg.supabase.co';
+var SUPA_KEY='sb_publishable_y9X5a2ueaYYa3Yyc3UyOFQ_vAiNn8DU';
+var supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+supa.auth.onAuthStateChange(function(event,session){
+  if(session&&session.user){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('editor-screen').style.display='block';
+    document.getElementById('admin-badge').style.display='';
+    document.getElementById('admin-badge').textContent=session.user.email;
+    document.getElementById('logout-btn').style.display='';
+    loadLocals();
+    loadAudit();
+    loadAnalytics();
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('editor-screen').style.display='none';
+    document.getElementById('admin-badge').style.display='none';
+    document.getElementById('logout-btn').style.display='none';
+  }
+});
+
+async function doLogin(){
+  var email=document.getElementById('login-email').value.trim();
+  var pw=document.getElementById('login-pw').value;
+  var errEl=document.getElementById('login-err');
+  var btn=document.getElementById('login-btn');
+  errEl.style.display='none';
+  btn.textContent='Signing in…';
+  btn.disabled=true;
+  var result=await supa.auth.signInWithPassword({email:email,password:pw});
+  btn.textContent='Sign in';
+  btn.disabled=false;
+  if(result.error){
+    errEl.textContent=result.error.message;
+    errEl.style.display='block';
+  }
+}
+
+async function signOut(){
+  await supa.auth.signOut();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=type==='error'?'#991b1b':type==='success'?'#065f46':'#0f172a';
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+// ── Locals editor ─────────────────────────────────────────────────────────────
+var LOCALS_DATA={};
+
+async function loadLocals(){
+  var container=document.getElementById('locals-container');
+  container.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading locals…</div>';
+  var result=await supa.from('locals').select('*').order('id');
+  if(result.error){container.innerHTML='<div class="empty-state">Error: '+result.error.message+'</div>';return;}
+  LOCALS_DATA={};
+  result.data.forEach(function(row){LOCALS_DATA[row.id]=row;});
+  renderLocals(result.data);
+}
+
+function renderLocals(rows){
+  var container=document.getElementById('locals-container');
+  if(!rows||!rows.length){container.innerHTML='<div class="empty-state">No locals found.</div>';return;}
+  container.innerHTML='';
+  rows.forEach(function(row){
+    var card=buildLocalCard(row);
+    container.appendChild(card);
+  });
+}
+
+function buildLocalCard(row){
+  var card=document.createElement('div');
+  card.className='local-card';
+  card.id='local-card-'+row.id;
+
+  // Header
+  var head=document.createElement('div');
+  head.className='local-card-head';
+  head.innerHTML=
+    '<div class="local-swatch" style="background:'+esc(row.color)+'"></div>'
+    +'<div><div class="local-name">Local '+esc(String(row.id))+'</div>'
+    +'<div class="local-region">'+esc(row.region||'')+'</div></div>'
+    +'<div class="local-chevron">&#8964;</div>';
+  head.addEventListener('click',function(){card.classList.toggle('open');});
+
+  // Body
+  var body=document.createElement('div');
+  body.className='local-card-body';
+  body.innerHTML=buildRateEditor(row);
+
+  // Save bar
+  var saveBar=document.createElement('div');
+  saveBar.className='save-bar';
+  saveBar.id='save-bar-'+row.id;
+  saveBar.innerHTML=
+    '<span class="save-msg">Unsaved changes</span>'
+    +'<span class="save-status" id="save-status-'+row.id+'"></span>'
+    +'<button class="btn btn-success btn-sm" onclick="saveLocal('+row.id+')">Save changes</button>';
+  body.appendChild(saveBar);
+
+  card.appendChild(head);
+  card.appendChild(body);
+  return card;
+}
+
+function buildRateEditor(row){
+  var cfg=row.rate_config||{};
+  var html='';
+
+  // ── Travel zones ────────────────────────────────────────────────────────────
+  if(cfg.travelZones&&cfg.travelZones.length){
+    html+='<div class="rate-section"><div class="rate-section-label">Travel Zones</div>';
+    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Description</th><th>Rate ($/day)</th></tr></thead><tbody>';
+    cfg.travelZones.forEach(function(z,i){
+      html+='<tr>'
+        +'<td class="mono">'+esc(z.zone||String(i+1))+'</td>'
+        +'<td><input class="zone-label-input" data-path="travelZones.'+i+'.desc" value="'+esc(z.desc||'')+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="travelZones.'+i+'.rate" value="'+esc(String(z.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // ── Appendix A zones ────────────────────────────────────────────────────────
+  if(cfg.appendixA&&cfg.appendixA.length){
+    html+='<div class="rate-section"><div class="rate-section-label">Appendix A</div>';
+    html+='<table class="rate-table"><thead><tr><th>Zone</th><th>Description</th><th>Rate ($/day)</th></tr></thead><tbody>';
+    cfg.appendixA.forEach(function(z,i){
+      html+='<tr>'
+        +'<td class="mono">'+esc(z.zone||String(i+1))+'</td>'
+        +'<td><input class="zone-label-input" data-path="appendixA.'+i+'.desc" value="'+esc(z.desc||'')+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="appendixA.'+i+'.rate" value="'+esc(String(z.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // ── Mileage brackets ────────────────────────────────────────────────────────
+  if(cfg.mileageBrackets&&cfg.mileageBrackets.length){
+    html+='<div class="rate-section"><div class="rate-section-label">Mileage Brackets</div>';
+    html+='<table class="rate-table"><thead><tr><th>Miles from</th><th>Miles to</th><th>Rate ($/day)</th></tr></thead><tbody>';
+    cfg.mileageBrackets.forEach(function(b,i){
+      html+='<tr>'
+        +'<td><input class="rate-input" type="number" step="1" min="0" data-path="mileageBrackets.'+i+'.from" value="'+esc(String(b.from||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="1" min="0" data-path="mileageBrackets.'+i+'.to" value="'+esc(String(b.to||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="mileageBrackets.'+i+'.rate" value="'+esc(String(b.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  // ── Per diem ─────────────────────────────────────────────────────────────────
+  if(cfg.perDiem){
+    html+='<div class="rate-section"><div class="rate-section-label">Per Diem</div>';
+    html+='<table class="rate-table"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+    var pd=cfg.perDiem;
+    if(pd.amount!==undefined){
+      html+='<tr><td>Daily amount ($)</td><td><input class="rate-input" type="number" step="0.01" min="0" data-path="perDiem.amount" value="'+esc(String(pd.amount||0))+'" onchange="markChanged('+row.id+',this)"/></td></tr>';
+    }
+    if(pd.note!==undefined){
+      html+='<tr><td>Note</td><td><input class="zone-label-input" style="width:280px" data-path="perDiem.note" value="'+esc(pd.note||'')+'" onchange="markChanged('+row.id+',this)"/></td></tr>';
+    }
+    html+='</tbody></table></div>';
+  }
+
+  // ── Hanford HSSA ─────────────────────────────────────────────────────────────
+  if(cfg.hanford&&cfg.hanford.areas){
+    html+='<div class="rate-section"><div class="rate-section-label">Hanford HSSA</div>';
+    html+='<table class="rate-table"><thead><tr><th>Area</th><th>Rate ($/day)</th></tr></thead><tbody>';
+    Object.keys(cfg.hanford.areas).forEach(function(areaId){
+      var a=cfg.hanford.areas[areaId];
+      html+='<tr>'
+        +'<td>'+esc(a.name||areaId)+'</td>'
+        +'<td><input class="rate-input" type="number" step="0.01" min="0" data-path="hanford.areas.'+areaId+'.rate" value="'+esc(String(a.rate||0))+'" onchange="markChanged('+row.id+',this)"/></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
+  if(!html) html='<div class="empty-state" style="padding:16px">No editable rate fields found in rate_config.<br>Check the seed data structure.</div>';
+  return html;
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Change tracking ───────────────────────────────────────────────────────────
+var PENDING={};
+
+function markChanged(localId,input){
+  input.classList.add('changed');
+  if(!PENDING[localId])PENDING[localId]={};
+  // Store changed path → value
+  setDeep(PENDING[localId],input.dataset.path,parseVal(input));
+  var bar=document.getElementById('save-bar-'+localId);
+  if(bar)bar.classList.add('visible');
+}
+
+function parseVal(input){
+  if(input.type==='number')return parseFloat(input.value)||0;
+  return input.value;
+}
+
+function setDeep(obj,path,val){
+  var parts=path.split('.');
+  var cur=obj;
+  for(var i=0;i<parts.length-1;i++){
+    var p=parts[i];
+    // Handle array indices
+    var idx=parseInt(p,10);
+    var key=isNaN(idx)?p:idx;
+    if(cur[key]===undefined||cur[key]===null)cur[key]=isNaN(parseInt(parts[i+1],10))?{}:[];
+    cur=cur[key];
+  }
+  var last=parts[parts.length-1];
+  var lastIdx=parseInt(last,10);
+  cur[isNaN(lastIdx)?last:lastIdx]=val;
+}
+
+// Deep merge pending changes into a copy of the current rate_config
+function mergeChanges(localId){
+  var row=LOCALS_DATA[localId];
+  if(!row)return null;
+  var newCfg=JSON.parse(JSON.stringify(row.rate_config||{}));
+  var changes=PENDING[localId]||{};
+  deepMerge(newCfg,changes);
+  return newCfg;
+}
+
+function deepMerge(target,source){
+  Object.keys(source).forEach(function(k){
+    if(source[k]!==null&&typeof source[k]==='object'&&!Array.isArray(source[k])){
+      if(!target[k]||typeof target[k]!=='object')target[k]={};
+      deepMerge(target[k],source[k]);
+    } else if(Array.isArray(source[k])){
+      if(!Array.isArray(target[k]))target[k]=[];
+      source[k].forEach(function(item,i){
+        if(item!==null&&typeof item==='object'){
+          if(!target[k][i]||typeof target[k][i]!=='object')target[k][i]={};
+          deepMerge(target[k][i],item);
+        } else if(item!==undefined){
+          target[k][i]=item;
+        }
+      });
+    } else {
+      target[k]=source[k];
+    }
+  });
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+async function saveLocal(localId){
+  var statusEl=document.getElementById('save-status-'+localId);
+  var barEl=document.getElementById('save-bar-'+localId);
+  if(statusEl)statusEl.innerHTML='<span class="spinner"></span>Saving…';
+
+  var newCfg=mergeChanges(localId);
+  if(!newCfg){toast('Error: local not found','error');return;}
+
+  var result=await supa.from('locals').update({rate_config:newCfg}).eq('id',localId);
+  if(result.error){
+    if(statusEl)statusEl.textContent='';
+    toast('Save failed: '+result.error.message,'error');
+    return;
+  }
+
+  // Update local cache
+  LOCALS_DATA[localId].rate_config=newCfg;
+  delete PENDING[localId];
+
+  // Clear changed indicators
+  var card=document.getElementById('local-card-'+localId);
+  if(card)card.querySelectorAll('.changed').forEach(function(el){el.classList.remove('changed');});
+  if(barEl)barEl.classList.remove('visible');
+  if(statusEl)statusEl.textContent='';
+
+  toast('Local '+localId+' saved','success');
+  // Refresh audit log
+  setTimeout(loadAudit,600);
+}
+
+// ── Audit log ─────────────────────────────────────────────────────────────────
+async function loadAudit(){
+  var container=document.getElementById('audit-container');
+  container.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading…</div>';
+  var result=await supa.from('audit_log').select('*').order('changed_at',{ascending:false}).limit(50);
+  if(result.error){container.innerHTML='<div class="empty-state">Error: '+result.error.message+'</div>';return;}
+  if(!result.data||!result.data.length){container.innerHTML='<div class="empty-state">No changes recorded yet.</div>';return;}
+
+  var html='<table class="audit-table"><thead><tr><th>When</th><th>Local</th><th>Field</th><th>Note</th></tr></thead><tbody>';
+  result.data.forEach(function(row){
+    var dt=new Date(row.changed_at);
+    var dtStr=dt.toLocaleDateString()+'  '+dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    html+='<tr>'
+      +'<td class="mono">'+esc(dtStr)+'</td>'
+      +'<td>'+esc(row.local_id?'Local '+row.local_id:'—')+'</td>'
+      +'<td><span class="tag tag-update">'+esc(row.field||'rate_config')+'</span></td>'
+      +'<td style="color:#64748b">'+esc(row.note||'—')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+async function loadAnalytics(){
+  var container=document.getElementById('analytics-container');
+  container.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading…</div>';
+
+  // Total searches
+  var totResult=await supa.from('search_log').select('*',{count:'exact',head:true});
+  var total=totResult.count||0;
+
+  // Searches by local
+  var byLocalResult=await supa.from('search_log').select('local_id').limit(1000);
+  var byLocal={};
+  if(byLocalResult.data){
+    byLocalResult.data.forEach(function(row){
+      var k=row.local_id?'Local '+row.local_id:'Unknown';
+      byLocal[k]=(byLocal[k]||0)+1;
+    });
+  }
+
+  // Most searched counties (top 5)
+  var byCountyResult=await supa.from('search_log').select('county').limit(1000);
+  var byCounty={};
+  if(byCountyResult.data){
+    byCountyResult.data.forEach(function(row){
+      if(row.county){byCounty[row.county]=(byCounty[row.county]||0)+1;}
+    });
+  }
+  var topCounties=Object.entries(byCounty).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+  var statsHtml='<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-label">Total searches</div></div>';
+  Object.entries(byLocal).sort(function(a,b){return b[1]-a[1];}).forEach(function(entry){
+    statsHtml+='<div class="stat-card"><div class="stat-num">'+entry[1]+'</div><div class="stat-label">'+esc(entry[0])+'</div></div>';
+  });
+  statsHtml+='</div>';
+
+  if(topCounties.length){
+    statsHtml+='<div class="section-hd" style="margin-top:16px"><h2 style="font-size:10px">Top Counties</h2></div>';
+    statsHtml+='<table class="audit-table"><thead><tr><th>County</th><th>Searches</th></tr></thead><tbody>';
+    topCounties.forEach(function(entry){
+      statsHtml+='<tr><td>'+esc(entry[0])+'</td><td class="mono">'+entry[1]+'</td></tr>';
+    });
+    statsHtml+='</tbody></table>';
+  } else {
+    statsHtml+='<div class="empty-state" style="padding-top:8px">No search data yet.</div>';
+  }
+
+  container.innerHTML=statsHtml;
+}
+</script>
+</body>
+</html>
