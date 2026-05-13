@@ -416,17 +416,29 @@ function buildSidebar(){
     var disps=Array.isArray(l.dispatches)?l.dispatches:[];
     var btnsHtml=disps.map(function(dp){
       var safeName=escSb(dp.name||'');
-      var nm=String(dp.name||'').replace(/'/g,"\\'");
       return '<button class="dp-btn" data-state="inactive" '
         +'data-dp-name="'+safeName+'" '
         +'data-dp-meta="'+escSb(id)+'|'+safeName+'|'+dp.lat+'|'+dp.lng+'" '
         +'data-lc="'+escSb(color)+'" '
-        +'style="border-color:'+escSb(color)+'aa;color:'+escSb(color)+'" '
-        +'onclick="event.stopPropagation();dpToggle('+JSON.stringify(id)+','+"'"+nm+"'"+','+dp.lat+','+dp.lng+',this)">'
+        +'style="border-color:'+escSb(color)+'aa;color:'+escSb(color)+'">'
         +escSb(shortDp(dp.name))+'</button>';
     }).join('');
     var jur=l.jurisdiction?'<div class="lrow-region-full">'+escSb(l.jurisdiction)+'</div>':'';
     body.innerHTML=jur+(btnsHtml?'<div class="lrow-disp">'+btnsHtml+'</div>':'');
+    // Wire dispatch buttons via addEventListener — inline onclick with a
+    // JSON.stringify'd id was emitting "82" with double quotes that closed
+    // the onclick="..." attribute early and dpToggle never fired.
+    body.querySelectorAll('.dp-btn').forEach(function(btn){
+      btn.addEventListener('click',function(ev){
+        ev.stopPropagation();
+        var parts=(btn.getAttribute('data-dp-meta')||'').split('|');
+        var blid=parts[0];
+        var bname=parts[1];
+        var blat=parseFloat(parts[2]);
+        var blng=parseFloat(parts[3]);
+        dpToggle(blid,bname,blat,blng,btn);
+      });
+    });
     row.appendChild(head);
     row.appendChild(body);
     c.appendChild(row);
@@ -440,7 +452,11 @@ function toggleLocalRow(id){
   c.querySelectorAll('.lrow.open').forEach(function(r){r.classList.remove('open');});
   if(!wasOpen){
     clicked.classList.add('open');
-    if(typeof flyTo==='function')try{flyTo(id);}catch(e){}
+    // Only fly to the local's territory if no destination is selected yet.
+    // While a destination is active we must NOT move the map — the user is
+    // comparing dispatch points to the SAME job site across locals.
+    var hasDest=(typeof CUR_LAT!=='undefined'&&CUR_LAT!==null)&&(typeof CUR_LNG!=='undefined'&&CUR_LNG!==null);
+    if(!hasDest&&typeof flyTo==='function')try{flyTo(id);}catch(e){}
   }
 }
 buildSidebar();
@@ -1625,6 +1641,12 @@ function exportPdf(){
 
 // Expose functions referenced by inline onclick attributes
 window.flyTo=flyTo;window.toggleHelp=toggleHelp;window.clearResult=clearResult;window.dpToggle=dpToggle;window.doSearch=doSearch;window.clearRoute=clearRoute;window.exportPdf=exportPdf;
+// Read-only state getters so external tests (and devtools) can inspect the
+// destination + primary-dispatch state without invading bootApp's scope.
+Object.defineProperty(window,'CUR_LAT',{get:function(){return CUR_LAT;}});
+Object.defineProperty(window,'CUR_LNG',{get:function(){return CUR_LNG;}});
+Object.defineProperty(window,'CALC_LID',{get:function(){return CALC_LID;}});
+Object.defineProperty(window,'PRIMARY_DISPATCH',{get:function(){return PRIMARY_DISPATCH;}});
 window.subwattMap=map;
 window.dispatchEvent(new CustomEvent('subwatt:ready'));
 }
