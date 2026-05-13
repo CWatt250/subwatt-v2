@@ -55,20 +55,31 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
 #body-row{flex:1 1 0;display:flex;min-height:0;overflow:hidden}
 
 /* Sidebar */
-#sidebar{flex:0 0 300px;width:300px;background:#ffffff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;overflow:hidden;box-shadow:1px 0 0 #e2e8f0}
-.sb-inner{display:flex;flex-direction:column;height:100%;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#e2e8f0 transparent}
+#sidebar{flex:0 0 300px;width:300px;background:#ffffff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:1px 0 0 #e2e8f0}
+.sb-inner{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent}
+.sb-inner::-webkit-scrollbar{width:6px}
+.sb-inner::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
 .sbl{padding:14px 16px 0;flex-shrink:0}
 .slbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .slbl::after{content:'';flex:1;height:1px;background:#f1f5f9}
 
-/* Local rows */
-.lgrid{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
-.lrow{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s}
-.lrow:hover{background:#f8fafc;border-color:#e2e8f0}
-.lrow.active{background:#eff6ff;border-color:#bfdbfe}
-.lsw{width:3px;height:28px;border-radius:2px;flex-shrink:0}
+/* Local rows — collapsible cards */
+.lgrid{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.lrow{display:flex;flex-direction:column;border-radius:8px;border:1px solid #e2e8f0;background:#fff;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.lrow:hover{border-color:#cbd5e1}
+.lrow.active{border-color:#bfdbfe;box-shadow:0 1px 4px rgba(37,99,235,.08)}
+.lrow-head{display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;user-select:none}
+.lsw{width:4px;height:28px;border-radius:2px;flex-shrink:0}
+.lrow-text{flex:1;min-width:0}
 .lnum{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#0f172a}
-.larea{font-size:10px;color:#64748b;margin-top:1px}
+.larea{font-size:10px;color:#64748b;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lchev{margin-left:6px;color:#94a3b8;transition:transform .2s;font-size:10px;line-height:1;flex-shrink:0}
+.lrow.open .lchev{transform:rotate(180deg)}
+.lrow-body{display:none;padding:0 10px 10px;border-top:1px solid #f1f5f9}
+.lrow.open .lrow-body{display:block}
+.lrow-disp{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.lrow-disp .dp-btn{background:#ffffff;border-radius:3px;padding:3px 8px;font-size:9px;font-family:'Space Mono',monospace;cursor:pointer;transition:all .15s;white-space:nowrap;border-width:1.5px;border-style:solid}
+.lrow-region-full{font-size:10px;color:#64748b;margin-top:6px;line-height:1.5}
 .sdiv{height:1px;background:#f1f5f9;margin:4px 0}
 
 /* Empty state */
@@ -255,8 +266,8 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
             <div style="font-size:12px;color:#64748b;line-height:1.5">Colored polygons inside Benton County use flat HSSA rates instead of distance zones.</div>
           </div>
         </div>
-        <div style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:10px;color:#94a3b8;line-height:1.5;text-align:center">
-          Covers HFIAW Locals 82, 7, and 36 \u00b7 Rates are estimates \u2014 verify with CBA
+        <div id="help-coverage" style="margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9;font-size:10px;color:#94a3b8;line-height:1.5;text-align:center">
+          Rates are estimates \u2014 always verify with your CBA
         </div>
       </div>
     </div>
@@ -268,11 +279,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
       <div class="sb-inner">
         <div class="sbl">
           <div class="slbl">Jurisdictions</div>
-          <div class="lgrid">
-            <div class="lrow" onclick="flyTo(82)" data-local="82"><div class="lsw" style="background:#4a9eff"></div><div style="flex:1;min-width:0"><div class="lnum">Local 82</div><div class="larea">E. Washington · N. Idaho · Montana</div><div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap"><button class="dp-btn" data-state="inactive" data-dp-name="Spokane, WA" data-dp-meta="82|Spokane, WA|47.6588|-117.426" onclick="event.stopPropagation();dpToggle(82,'Spokane, WA',47.6588,-117.426,this)" style="background:#ffffff;border:1.5px solid #4a9effaa;border-radius:2px;color:#4a9eff;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#4a9eff">Spokane</button><button class="dp-btn" data-state="inactive" data-dp-name="Pasco, WA" data-dp-meta="82|Pasco, WA|46.2396|-119.1006" onclick="event.stopPropagation();dpToggle(82,'Pasco, WA',46.2396,-119.1006,this)" style="background:#ffffff;border:1.5px solid #4a9effaa;border-radius:2px;color:#4a9eff;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#4a9eff">Pasco</button></div></div></div>
-            <div class="lrow" onclick="flyTo(7)" data-local="7"><div class="lsw" style="background:#3dd68c"></div><div style="flex:1;min-width:0"><div class="lnum">Local 7</div><div class="larea">Western Washington</div><div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap"><button class="dp-btn" data-state="inactive" data-dp-name="Seattle" data-dp-meta="7|Seattle|47.6062|-122.3321" onclick="event.stopPropagation();dpToggle(7,'Seattle',47.6062,-122.3321,this)" style="background:#ffffff;border:1.5px solid #3dd68caa;border-radius:2px;color:#3dd68c;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#3dd68c">Seattle</button><button class="dp-btn" data-state="inactive" data-dp-name="Tacoma" data-dp-meta="7|Tacoma|47.2529|-122.4443" onclick="event.stopPropagation();dpToggle(7,'Tacoma',47.2529,-122.4443,this)" style="background:#ffffff;border:1.5px solid #3dd68caa;border-radius:2px;color:#3dd68c;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#3dd68c">Tacoma</button></div></div></div>
-            <div class="lrow" onclick="flyTo(36)" data-local="36"><div class="lsw" style="background:#f5a623"></div><div style="flex:1;min-width:0"><div class="lnum">Local 36</div><div class="larea">Oregon · SW Washington</div><div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap"><button class="dp-btn" data-state="inactive" data-dp-name="Portland, OR" data-dp-meta="36|Portland, OR|45.5051|-122.675" onclick="event.stopPropagation();dpToggle(36,'Portland, OR',45.5051,-122.675,this)" style="background:#ffffff;border:1.5px solid #f5a623aa;border-radius:2px;color:#f5a623;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#f5a623">Portland</button><button class="dp-btn" data-state="inactive" data-dp-name="Medford, OR" data-dp-meta="36|Medford, OR|42.3265|-122.8756" onclick="event.stopPropagation();dpToggle(36,'Medford, OR',42.3265,-122.8756,this)" style="background:#ffffff;border:1.5px solid #f5a623aa;border-radius:2px;color:#f5a623;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#f5a623">Medford</button><button class="dp-btn" data-state="inactive" data-dp-name="Eugene, OR" data-dp-meta="36|Eugene, OR|44.0521|-123.0868" onclick="event.stopPropagation();dpToggle(36,'Eugene, OR',44.0521,-123.0868,this)" style="background:#ffffff;border:1.5px solid #f5a623aa;border-radius:2px;color:#f5a623;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#f5a623">Eugene</button><button class="dp-btn" data-state="inactive" data-dp-name="Bend, OR" data-dp-meta="36|Bend, OR|44.0582|-121.3153" onclick="event.stopPropagation();dpToggle(36,'Bend, OR',44.0582,-121.3153,this)" style="background:#ffffff;border:1.5px solid #f5a623aa;border-radius:2px;color:#f5a623;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#f5a623">Bend</button><button class="dp-btn" data-state="inactive" data-dp-name="Hermiston, OR" data-dp-meta="36|Hermiston, OR|45.8401|-119.2895" onclick="event.stopPropagation();dpToggle(36,'Hermiston, OR',45.8401,-119.2895,this)" style="background:#ffffff;border:1.5px solid #f5a623aa;border-radius:2px;color:#f5a623;padding:2px 7px;font-size:9px;font-family:Space Mono,monospace;cursor:pointer;transition:all .15s;white-space:nowrap" data-lc="#f5a623">Hermiston</button></div></div></div>
-          </div>
+          <div class="lgrid" id="lgrid"></div>
         </div>
         <div class="sdiv"></div>
         <div id="es">
@@ -381,6 +388,62 @@ var DISPATCH={};Object.keys(LOCALS).forEach(function(k){DISPATCH[k]=LOCALS[k].di
   var tag=document.getElementById('tb-tag-locals');
   if(tag)tag.textContent='HFIAW \u00b7 '+n+' Local'+(n===1?'':'s');
 })();
+
+// \u2500\u2500 Sidebar: dynamic, collapsible, scrollable \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function escSb(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function shortDp(name){var s=String(name||'');var i=s.indexOf(',');return i>0?s.slice(0,i):s;}
+function buildSidebar(){
+  var c=document.getElementById('lgrid');
+  if(!c)return;
+  c.innerHTML='';
+  var ids=Object.keys(LOCALS).sort(function(a,b){return parseInt(a,10)-parseInt(b,10);});
+  ids.forEach(function(id){
+    var l=LOCALS[id];if(!l)return;
+    var color=l.color||'#2563eb';
+    var region=l.region||l.hallCity||'';
+    var row=document.createElement('div');
+    row.className='lrow';
+    row.setAttribute('data-local',id);
+    var head=document.createElement('div');
+    head.className='lrow-head';
+    head.innerHTML='<div class="lsw" style="background:'+escSb(color)+'"></div>'
+      +'<div class="lrow-text"><div class="lnum">'+escSb(l.name||('Local '+id))+'</div>'
+      +'<div class="larea">'+escSb(region)+'</div></div>'
+      +'<div class="lchev">\u25be</div>';
+    head.addEventListener('click',function(){toggleLocalRow(id);});
+    var body=document.createElement('div');
+    body.className='lrow-body';
+    var disps=Array.isArray(l.dispatches)?l.dispatches:[];
+    var btnsHtml=disps.map(function(dp){
+      var safeName=escSb(dp.name||'');
+      var nm=String(dp.name||'').replace(/'/g,"\\'");
+      return '<button class="dp-btn" data-state="inactive" '
+        +'data-dp-name="'+safeName+'" '
+        +'data-dp-meta="'+escSb(id)+'|'+safeName+'|'+dp.lat+'|'+dp.lng+'" '
+        +'data-lc="'+escSb(color)+'" '
+        +'style="border-color:'+escSb(color)+'aa;color:'+escSb(color)+'" '
+        +'onclick="event.stopPropagation();dpToggle('+JSON.stringify(id)+','+"'"+nm+"'"+','+dp.lat+','+dp.lng+',this)">'
+        +escSb(shortDp(dp.name))+'</button>';
+    }).join('');
+    var jur=l.jurisdiction?'<div class="lrow-region-full">'+escSb(l.jurisdiction)+'</div>':'';
+    body.innerHTML=jur+(btnsHtml?'<div class="lrow-disp">'+btnsHtml+'</div>':'');
+    row.appendChild(head);
+    row.appendChild(body);
+    c.appendChild(row);
+  });
+}
+function toggleLocalRow(id){
+  var c=document.getElementById('lgrid');if(!c)return;
+  var clicked=c.querySelector('.lrow[data-local="'+id+'"]');
+  if(!clicked)return;
+  var wasOpen=clicked.classList.contains('open');
+  c.querySelectorAll('.lrow.open').forEach(function(r){r.classList.remove('open');});
+  if(!wasOpen){
+    clicked.classList.add('open');
+    if(typeof flyTo==='function')try{flyTo(id);}catch(e){}
+  }
+}
+buildSidebar();
 var L7A=(LOCALS['7']&&LOCALS['7'].appendixA)?LOCALS['7'].appendixA.fipsOverride:{};
 var HANFORD_AREAS=data.hanford.areas;
 var HANFORD_GEO=data.hanford.geo;
@@ -463,6 +526,28 @@ Object.keys(HANFORD_LABELS).forEach(function(id){
   }).addTo(map);
 });
 
+
+// Colored hall-city markers so every local — including those outside the
+// county-shaded states — is visibly placed on the map in its own color.
+(function(){
+  Object.keys(LOCALS).forEach(function(lid){
+    var l=LOCALS[lid];
+    if(!l||!Array.isArray(l.center)||l.center.length<2)return;
+    var color=l.color||'#2563eb';
+    var html='<div style="pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);'
+      +'filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))">'
+      +'<div style="width:18px;height:18px;background:'+color+';border:2px solid #fff;'
+        +'border-radius:50%;box-shadow:0 0 0 1px '+color+'66"></div>'
+      +'<div style="background:#fff;color:'+color+';font-family:Space Mono,monospace;'
+        +'font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;border:1px solid '+color+'55;'
+        +'margin-top:2px;white-space:nowrap;text-align:center;letter-spacing:.3px">'
+        +'L'+escSb(lid)+'</div></div>';
+    L.marker(l.center,{
+      icon:L.divIcon({className:'',html:html,iconSize:[0,0],iconAnchor:[0,0]}),
+      title:(l.name||'Local '+lid)+(l.hallCity?' — '+l.hallCity:'')
+    }).addTo(map).on('click',function(){ if(typeof flyTo==='function')flyTo(lid); });
+  });
+})();
 
 map.fitBounds([[38.5,-124.7],[49.0,-104.0]],{padding:[10,10]});
 document.getElementById('sbm').textContent='Click any county to look up jurisdiction';
