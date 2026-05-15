@@ -1405,17 +1405,23 @@ function drawRoute(fromLat,fromLng,fromName,toLat,toLng,color){
       showRouteInfo('No route found',color,null,null);return;
     }
     var route=data.routes[0];
-    var miles=(route.distance*0.000621371).toFixed(1);
-    var mins=Math.round(route.duration/60);
+    var dist=route&&route.distance;
+    var dur=route&&route.duration;
+    if(dist==null||dur==null){showRouteInfo('Route data incomplete',color,null,null);return;}
+    var miles=(dist*0.000621371).toFixed(1);
+    var mins=Math.round(dur/60);
     var hours=Math.floor(mins/60),remMins=mins%60;
     var timeStr=hours>0?hours+'h '+remMins+'m':mins+'m';
     ROUTE_CACHE[key]={miles:miles,geometry:route.geometry,timeStr:timeStr};
     renderRoute(route.geometry,miles,timeStr,fromName,color);
     ROUTE_FETCH_CTRL=null;
-    // Analytics: log each unique address search (fire-and-forget)
+    // Analytics: log each unique address search (fire-and-forget).
+    // Wrapped so a logging error cannot trigger the route-failure banner.
     if(CUR_SEARCH_ADDRESS){
-      var sbm=document.getElementById('sbm');
-      logSearch(CUR_LID,sbm?sbm.textContent:null,CUR_SEARCH_ADDRESS);
+      try{
+        var sbm=document.getElementById('sbm');
+        if(typeof logSearch==='function')logSearch(CUR_LID,sbm?sbm.textContent:null,CUR_SEARCH_ADDRESS);
+      }catch(e){/* analytics non-critical */}
     }
   }).catch(function(err){
     if(err&&err.name==='AbortError')return;
