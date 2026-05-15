@@ -27,7 +27,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
 #shell{display:flex;flex-direction:column;width:100vw;height:100vh}
 
 /* Topbar */
-#topbar{flex:0 0 52px;background:#ffffff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 16px;z-index:900;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+#topbar{flex:0 0 52px;background:#ffffff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 16px;position:relative;z-index:1100;box-shadow:0 1px 3px rgba(15,23,42,.06)}
 .tb-logo{display:flex;align-items:center;gap:10px;margin-right:20px}
 .tb-logo-mark{width:34px;height:34px;background:#ffffff;border:2px solid #2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(37,99,235,.18);overflow:hidden}
 .tb-logo-mark svg{width:20px;height:20px;display:block}
@@ -37,7 +37,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
 .tb-title .watt{color:#f97316}
 .tb-tagline{font-family:'Space Mono',monospace;font-size:8px;font-weight:600;letter-spacing:1.5px;color:#64748b;text-transform:uppercase;margin-top:3px;padding-top:3px;border-top:1px solid #f97316;text-align:center}
 .tb-sep{width:1px;height:22px;background:#e2e8f0;margin:0 18px}
-.swi{position:relative;flex:1}
+.swi{position:relative;flex:1;z-index:1100}
 .si-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none}
 .tb-search{width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;color:#0f172a;padding:5px 10px 5px 28px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,background .15s}
 .tb-search:focus{border-color:#2563eb;background:#ffffff;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
     <div class="tb-sw">
       <div class="swi">
         <svg class="si-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="si" class="tb-search" placeholder="Search city — Spokane, Portland, Billings…"/>
+        <input type="search" id="si" class="tb-search" placeholder="Search city — Spokane, Portland, Billings…" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" aria-autocomplete="list" role="combobox" aria-expanded="false"/>
       </div>
       <button class="tb-btn pr" onclick="doSearch()">Search</button>
       <button class="tb-btn" onclick="clearResult()">Clear</button>
@@ -961,8 +961,12 @@ function paintDropRows(){
 function selectSuggestion(i){
   var s=searchSuggestions[i];
   if(!s)return;
-  var query=document.getElementById('si').value;
-  document.getElementById('si').value=s.name||'';
+  var input=document.getElementById('si');
+  var query=input.value;
+  input.value=s.name||'';
+  // Blur the input so the browser's saved-address autofill UI can't pop up
+  // over the map after we navigate.
+  input.blur();
   hideDrop();
   mbxRetrieve(s.mapbox_id,function(res){
     var p=res.properties||{};
@@ -978,7 +982,7 @@ function showDrop(suggestions){
   var wrap=document.querySelector('.swi');
   var dd=document.createElement('div');
   dd.id='search-dd';
-  dd.style.cssText='position:absolute;top:calc(100% + 4px);left:0;right:0;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;z-index:10000;overflow:hidden;box-shadow:0 4px 20px rgba(15,23,42,.12);font-family:DM Sans,sans-serif;font-size:12px';
+  dd.style.cssText='position:absolute;top:calc(100% + 4px);left:0;right:0;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;z-index:11000;overflow:hidden;box-shadow:0 4px 20px rgba(15,23,42,.12);font-family:DM Sans,sans-serif;font-size:12px';
   suggestions.forEach(function(s,i){
     var el=document.createElement('div');
     el.setAttribute('data-idx',i);
@@ -989,8 +993,18 @@ function showDrop(suggestions){
     el.innerHTML='<span style="font-size:12px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+primary+'</span>'
       +'<span style="font-size:10px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%">'+secondary+'</span>';
     el.addEventListener('mouseover',function(){searchHighlight=i;paintDropRows();});
-    el.addEventListener('mousedown',function(e){
+    // Use pointerdown + preventDefault so the click registers before the
+    // input loses focus (which would otherwise let the browser's autofill UI
+    // race the navigation). Touch devices fire pointerdown too.
+    el.addEventListener('pointerdown',function(e){
       e.preventDefault();
+      e.stopPropagation();
+      selectSuggestion(i);
+    });
+    // Fallback for browsers without pointer events.
+    el.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
       selectSuggestion(i);
     });
     dd.appendChild(el);
