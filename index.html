@@ -1758,17 +1758,68 @@ function exportPdf(){
     });
   }
 
+  // Rasterize the live topbar brand lockup (pin badge + SUBWATT wordmark + tagline) to a transparent
+  // PNG so the PDF title is a pixel-exact clone of the app header. 4x scale keeps it crisp at print zoom.
+  function captureLockup(){
+    var el=document.querySelector('#topbar .tb-logo')||document.querySelector('.tb-logo');
+    if(!el)return Promise.reject(new Error('lockup element not found'));
+    // The wordmark/tagline are hidden on narrow viewports — force them visible just for the capture.
+    var wrap=el.querySelector('.tb-title-wrap');
+    var prevDisp=wrap?wrap.style.display:null;
+    if(wrap)wrap.style.display='flex';
+    function restore(){ if(wrap)wrap.style.display=prevDisp; }
+    var w=el.offsetWidth,h=el.offsetHeight;
+    var cap;
+    if(typeof domtoimage!=='undefined'){
+      cap=domtoimage.toPng(el,{width:w,height:h,scale:4,cacheBust:true,style:{transform:'none',margin:'0'}});
+    } else if(typeof html2canvas!=='undefined'){
+      cap=html2canvas(el,{backgroundColor:null,scale:4,logging:false,width:w,height:h}).then(function(c){return c.toDataURL('image/png');});
+    } else {
+      restore();return Promise.reject(new Error('no rasterizer for lockup'));
+    }
+    return cap.then(function(dataUrl){
+      restore();
+      return new Promise(function(resolve){
+        var im=new Image();
+        im.onload=function(){ resolve({dataUrl:dataUrl,w:im.naturalWidth,h:im.naturalHeight}); };
+        im.onerror=function(){ resolve({dataUrl:dataUrl,w:w*4,h:h*4}); };
+        im.src=dataUrl;
+      });
+    },function(e){ restore();throw e; });
+  }
+
+  // Fallback title (only if the lockup capture fails): the previous colored-text lockup drawn with jsPDF.
+  function drawTextTitle(pdf,margin,pin){
+    var titleY=margin+0.22,titleSize=16;
+    pdf.setFontSize(titleSize);
+    var tx=margin;
+    if(pin&&pin.dataUrl){
+      var capH=titleSize/72*0.70,pinH=capH*1.15,pinW=pinH*(pin.w/pin.h);
+      pdf.addImage(pin.dataUrl,'PNG',tx,titleY-(capH+pinH)/2,pinW,pinH);
+      tx+=pinW+0.06;
+    }
+    pdf.setFont('courier','bold');pdf.setTextColor(37,99,235);
+    pdf.text('SUB',tx,titleY);
+    var wSub=pdf.getTextWidth('SUB');
+    pdf.setTextColor(249,115,22);
+    pdf.text('WATT',tx+wSub,titleY);
+    var wWatt=pdf.getTextWidth('WATT');
+    pdf.setFont('helvetica','bold');pdf.setTextColor(15,23,42);
+    pdf.text(' — Travel Rate Estimate',tx+wSub+wWatt,titleY);
+  }
+
   setTimeout(function(){
     var capP=captureWithDomToImage().catch(function(e){
       console.warn('dom-to-image-more failed, falling back to html2canvas:',e);
       return captureWithHtml2Canvas();
     });
+    var lockP=captureLockup().catch(function(e){ console.warn('lockup capture failed, falling back to text title:',e); return null; });
     var pinP=rasterizeBrandPin().catch(function(e){ console.warn('brand pin rasterize failed:',e); return null; });
-    Promise.all([capP,pinP]).then(function(res){
-      var dataUrl=res[0],pin=res[1];
+    Promise.all([capP,lockP,pinP]).then(function(res){
+      var dataUrl=res[0],lockup=res[1],pin=res[2];
       var probe=new Image();
-      probe.onload=function(){ buildPdf(dataUrl,probe.naturalWidth,probe.naturalHeight,pin); };
-      probe.onerror=function(){ buildPdf(dataUrl,mapEl.offsetWidth*2,mapEl.offsetHeight*2,pin); };
+      probe.onload=function(){ buildPdf(dataUrl,probe.naturalWidth,probe.naturalHeight,lockup,pin); };
+      probe.onerror=function(){ buildPdf(dataUrl,mapEl.offsetWidth*2,mapEl.offsetHeight*2,lockup,pin); };
       probe.src=dataUrl;
     }).catch(function(err){
       console.error('Export failed',err);
@@ -1777,7 +1828,7 @@ function exportPdf(){
     });
   },120);
 
-  function buildPdf(imgDataUrl,imgW,imgH,pin){
+  function buildPdf(imgDataUrl,imgW,imgH,lockup,pin){
     try{
       var jsPDF=window.jspdf.jsPDF;
       var pdf=new jsPDF({orientation:'landscape',unit:'in',format:'letter'});
@@ -1785,29 +1836,20 @@ function exportPdf(){
       var pageH=pdf.internal.pageSize.getHeight();
       var margin=0.5;
 
-      // Branded title: [pin] SUB(blue)WATT(orange) \u2014 Travel Rate Estimate.
-      // Same baseline/size as before so nothing below shifts; only the "SubWatt" word changes.
-      var titleY=margin+0.22, titleSize=16;
-      pdf.setFontSize(titleSize);
-      var tx=margin;
-      if(pin&&pin.dataUrl){
-        var capH=titleSize/72*0.70;            // ~cap height of the title line, in inches
-        var pinH=capH*1.15, pinW=pinH*(pin.w/pin.h);
-        var pinY=titleY-(capH+pinH)/2;         // vertically center the pin on the cap band
-        pdf.addImage(pin.dataUrl,'PNG',tx,pinY,pinW,pinH);
-        tx+=pinW+0.06;
+      // Title = a pixel-exact clone of the app's topbar lockup, rasterized and embedded as one image.
+      // If the lockup capture failed at runtime, fall back to the previous colored-text title.
+      var shift=0;
+      if(lockup&&lockup.dataUrl){
+        var lockH=0.46;                          // total lockup height (~0.4-0.5"); wordmark cap \u2248 old 16pt title
+        var lockW=lockH*(lockup.w/lockup.h);
+        pdf.addImage(lockup.dataUrl,'PNG',margin,margin,lockW,lockH);
+        // Lockup is taller than the old single-line title; push everything below down by exactly the growth.
+        shift=(margin+lockH+0.18)-(margin+0.45);
+      } else {
+        drawTextTitle(pdf,margin,pin);
       }
-      // Monospace lockup (Courier-Bold) echoes the SubWatt brand mark; descriptor stays in the title font.
-      pdf.setFont('courier','bold');pdf.setTextColor(37,99,235);
-      pdf.text('SUB',tx,titleY);
-      var wSub=pdf.getTextWidth('SUB');
-      pdf.setTextColor(249,115,22);
-      pdf.text('WATT',tx+wSub,titleY);
-      var wWatt=pdf.getTextWidth('WATT');
-      pdf.setFont('helvetica','bold');pdf.setTextColor(15,23,42);
-      pdf.text(' \u2014 Travel Rate Estimate',tx+wSub+wWatt,titleY);
       pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.setTextColor(100,116,139);
-      pdf.text('Generated '+new Date().toLocaleString(),margin,margin+0.45);
+      pdf.text('Generated '+new Date().toLocaleString(),margin,margin+0.45+shift);
 
       var rows=[];
       var localEl=document.querySelector('#rc .rch .rcn');
@@ -1839,8 +1881,8 @@ function exportPdf(){
       rows.push(['Zone',zoneLbl||'\u2014']);
       rows.push(['Daily travel rate',rate||'\u2014']);
 
-      var topY=margin+0.65;
-      var bottomY=pageH-margin-0.35;
+      var topY=margin+0.65+shift;
+      var bottomY=pageH-margin-0.35+shift;
       var mapW=(pageW-margin*2)*0.66;
       var mapH=bottomY-topY;
       var aspect=imgW/imgH;
