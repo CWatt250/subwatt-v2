@@ -747,7 +747,14 @@ window.useIrexAsDispatch=useIrexAsDispatch;
 map.fitBounds([[38.5,-124.7],[49.0,-104.0]],{padding:[10,10]});
 document.getElementById('sbm').textContent='Click any county to look up jurisdiction';
 var ol=document.getElementById('loading-overlay');ol.classList.add('hidden');setTimeout(function(){ol.style.display='none';},400);
-function pm(lat,lng,color){if(mk){map.removeLayer(mk);mk=null;}mk=L.marker([lat,lng],{icon:L.divIcon({className:'',html:'<div style="width:10px;height:10px;background:'+color+';border:2px solid #fff;border-radius:50%;box-shadow:0 0 10px '+color+'88;margin:-5px 0 0 -5px"></div>',iconSize:[0,0]})}).addTo(map);}
+// Destination marker = SubWatt brand pin (pointier-tip variant, no ground
+// rings). The pin TIP (path vertex 0,26 in the -19 -29 38 57 viewBox) is the
+// anchor so it sits exactly on the destination coordinate at every zoom.
+// 30x45 box: tipX=30*0.5=15, tipY=45*(26-(-29))/57=43.42. Brand colors are
+// fixed (orange/blue); the legacy color arg is ignored. interactive:false so
+// the pin never intercepts county clicks beneath it.
+var DEST_PIN_SVG='<svg xmlns="http://www.w3.org/2000/svg" width="30" height="45" viewBox="-19 -29 38 57" style="display:block;overflow:visible;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))"><path d="M0,26 C-2,16 -16,2 -16,-10 A16,16 0 1 1 16,-10 C16,2 2,16 0,26 Z" fill="#f97316" stroke="#2563eb" stroke-width="3.5" stroke-linejoin="miter"/><circle cx="4.5" cy="-14.5" r="6.5" fill="#ffffff"/></svg>';
+function pm(lat,lng,color){if(mk){map.removeLayer(mk);mk=null;}mk=L.marker([lat,lng],{icon:L.divIcon({className:'',html:DEST_PIN_SVG,iconSize:[30,45],iconAnchor:[15,43.42]}),zIndexOffset:700,interactive:false}).addTo(map);}
 function sr(local,cn,lid){
   document.querySelectorAll('.lrow').forEach(function(r){r.classList.remove('active');});
   if(lid){var row=document.querySelector('.lrow[data-local="'+lid+'"]');if(row)row.classList.add('active');}
@@ -909,7 +916,9 @@ function showCountyLabel(cn,lat,lng,color){
       +'border-top:7px solid #1e293b;margin:0 auto"></div>'
   +'</div>';
   countyLabelMk=L.marker([lat,lng],{
-    icon:L.divIcon({className:'',html:lbl,iconSize:[0,0]}),
+    // Raise the label by the destination pin's height (~46px) so it clears the
+    // pin head instead of overlapping it; text and tail are unchanged.
+    icon:L.divIcon({className:'',html:lbl,iconSize:[0,0],iconAnchor:[0,46]}),
     interactive:false,zIndexOffset:1000
   }).addTo(map);
 }
