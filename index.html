@@ -223,7 +223,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
       <button class="tb-btn pr" onclick="doSearch()">Search</button>
       <button class="tb-btn" onclick="clearResult()">Clear</button>
     </div>
-    <div class="tb-right"><button id="btn-irex" class="tb-btn" onclick="toggleIrex()" title="Toggle Irex Argus branches" aria-pressed="false" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fff;border-color:#1e5fa8;color:#1e5fa8" onmouseover="this.style.background='#eaf2fb'" onmouseout="if(this.getAttribute('aria-pressed')!=='true')this.style.background='#fff'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 9l9-6 9 6"/><line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/></svg>Irex Branches</button><button class="tb-btn" onclick="toggleHelp()" title="How to use" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fef3c7;border-color:#fcd34d;color:#92400e" onmouseover="this.style.background='#fde68a';this.style.borderColor='#f59e0b'" onmouseout="this.style.background='#fef3c7';this.style.borderColor='#fcd34d'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button><button id="btn-export" class="tb-btn" onclick="exportPdf()" title="Export current view as PDF" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#ecfdf5;border-color:#a7f3d0;color:#065f46" onmouseover="this.style.background='#d1fae5';this.style.borderColor='#34d399'" onmouseout="this.style.background='#ecfdf5';this.style.borderColor='#a7f3d0'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button><button id="install-btn" hidden style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:#2563eb;border:1px solid #1d4ed8;border-radius:4px;padding:5px 12px;cursor:pointer" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Install App</button><div class="tb-tag" id="tb-tag-locals">HFIAW · 3 Locals</div><div class="tb-dot"></div></div><button id="mobile-menu-btn" type="button" aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+    <div class="tb-right"><button id="btn-irex" class="tb-btn" onclick="toggleIrex()" title="Toggle Irex Argus branches" aria-pressed="false" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fff;border-color:#1e5fa8;color:#1e5fa8" onmouseover="this.style.background='#eaf2fb'" onmouseout="if(this.getAttribute('aria-pressed')!=='true')this.style.background='#fff'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 9l9-6 9 6"/><line x1="9" y1="14" x2="9" y2="18"/><line x1="15" y1="14" x2="15" y2="18"/></svg>Irex Branches</button><div id="rate-toggle" style="display:none;align-items:center;gap:6px;padding:4px 10px;background:#fff;border:1px solid #cbd5e1;border-radius:4px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.5px" title="Switch which local's travel rate is shown for this mileage"></div><button class="tb-btn" onclick="toggleHelp()" title="How to use" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#fef3c7;border-color:#fcd34d;color:#92400e" onmouseover="this.style.background='#fde68a';this.style.borderColor='#f59e0b'" onmouseout="this.style.background='#fef3c7';this.style.borderColor='#fcd34d'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button><button id="btn-export" class="tb-btn" onclick="exportPdf()" title="Export current view as PDF" style="display:flex;align-items:center;gap:6px;padding:5px 12px;background:#ecfdf5;border-color:#a7f3d0;color:#065f46" onmouseover="this.style.background='#d1fae5';this.style.borderColor='#34d399'" onmouseout="this.style.background='#ecfdf5';this.style.borderColor='#a7f3d0'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button><button id="install-btn" hidden style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;background:#2563eb;border:1px solid #1d4ed8;border-radius:4px;padding:5px 12px;cursor:pointer" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Install App</button><div class="tb-tag" id="tb-tag-locals">HFIAW · 3 Locals</div><div class="tb-dot"></div></div><button id="mobile-menu-btn" type="button" aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
   </div>
   
   <div id="help-modal" onclick="if(event.target===this)toggleHelp()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)">
@@ -758,6 +758,7 @@ function sr(local,cn,lid){
     rc.innerHTML='<div style="padding:20px 16px"><div style="font-family:Space Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:8px">Outside Region</div><div style="font-size:11px;color:#64748b;line-height:1.7">'+cn+' is outside the mapped HFIAW western jurisdictions.</div></div>';
     document.getElementById('hl').textContent='outside region';
     document.getElementById('sbm').textContent=cn;
+    updateRateToggle();
     return;
   }
   document.getElementById('hl').textContent=local.name+' \u00b7 '+local.hallCity;
@@ -912,7 +913,7 @@ function showCountyLabel(cn,lat,lng,color){
     interactive:false,zIndexOffset:1000
   }).addTo(map);
 }
-function clearResult(){clearDispatchZones();CUR_LAT=null;CUR_LNG=null;CUR_LID=null;CUR_FIPS=null;CUR_HANFORD=null;CUR_SEARCH_ADDRESS=null;PRIMARY_DISPATCH=null;ACTIVE_STACK=[];CALC_LID=null;LAST_ROUTE_MILES=null;AUTO_SELECTED=false;if(countyLabelMk){map.removeLayer(countyLabelMk);countyLabelMk=null;}if(mk){map.removeLayer(mk);mk=null;}document.querySelectorAll('.lrow').forEach(function(r){r.classList.remove('active');});document.getElementById('es').style.display='flex';var rc=document.getElementById('rc');rc.style.display='none';rc.innerHTML='';document.getElementById('hl').textContent='\u2014 select location \u2014';document.getElementById('sbm').textContent='Click any county to look up jurisdiction';document.getElementById('si').value='';}
+function clearResult(){clearDispatchZones();CUR_LAT=null;CUR_LNG=null;CUR_LID=null;CUR_FIPS=null;CUR_HANFORD=null;CUR_SEARCH_ADDRESS=null;PRIMARY_DISPATCH=null;ACTIVE_STACK=[];CALC_LID=null;RATE_LID=null;LAST_ROUTE_MILES=null;AUTO_SELECTED=false;updateRateToggle();if(countyLabelMk){map.removeLayer(countyLabelMk);countyLabelMk=null;}if(mk){map.removeLayer(mk);mk=null;}document.querySelectorAll('.lrow').forEach(function(r){r.classList.remove('active');});document.getElementById('es').style.display='flex';var rc=document.getElementById('rc');rc.style.display='none';rc.innerHTML='';document.getElementById('hl').textContent='\u2014 select location \u2014';document.getElementById('sbm').textContent='Click any county to look up jurisdiction';document.getElementById('si').value='';}
 function flyTo(lid){CUR_SEARCH_ADDRESS=null;var l=LOCALS[lid];map.flyTo(l.center,l.zoom,{duration:.9});}
 
 // ── Mapbox Search Box (suggest + retrieve) ──────────────────────────────────
@@ -1104,6 +1105,13 @@ var CUR_SEARCH_ADDRESS=null;
 // Primary dispatch = the active dispatch driving the calculator + route
 // ACTIVE_STACK = ordered list of currently-active dispatch names (most-recent first)
 var PRIMARY_DISPATCH=null,ACTIVE_STACK=[],LAST_ROUTE_MILES=null,AUTO_SELECTED=false;
+// RATE_LID = which local's zone/mileage table the rate card uses. null means
+// "follow the dispatch local" (CALC_LID). When the destination county belongs
+// to a different local than dispatch, the top-bar Rate Zone toggle lets the
+// user flip this to the destination local — recalculating ONLY the rate card
+// against the already-computed road miles. Reset to null (dispatch) on every
+// rebuild so each new selection defaults to the dispatch local's rates.
+var RATE_LID=null;
 // [DISPATCH] loaded from data.json
 // [L7A] loaded from data.json
 
@@ -1150,19 +1158,23 @@ function cGeneric(lid,m){
 
 function updateCost(){
   var el=document.getElementById('calc-mi'),out=document.getElementById('calc-out');
-  if(!el||!out||CALC_LID===null)return;
+  // Effective rate local: the toggle override (RATE_LID) when set, otherwise
+  // the dispatch local (CALC_LID). Only the rate lookup uses this \u2014 route,
+  // miles, drive time and zone rings stay tied to the dispatch.
+  var elid=(RATE_LID!=null)?RATE_LID:CALC_LID;
+  if(!el||!out||elid===null)return;
   var m=parseFloat(el.value)||0,cv=false;
   var cvEl=document.getElementById('calc-cv');if(cvEl)cv=cvEl.value==='1';
   var res=null;
   // Hanford override: flat HSSA rate replaces zone calculation when inside a Hanford area on Local 82 rates
-  if(CUR_HANFORD&&CALC_LID==82){
+  if(CUR_HANFORD&&elid==82){
     var ha=HANFORD_AREAS[CUR_HANFORD];
     res={z:'HSSA '+ha.name+' \u2014 Flat Rate',c:ha.rate,n:'Hanford Site Stabilization Agreement \u00b7 Eff. 11/03/2025',hanford:true};
   }
-  else if(CALC_LID==82)res=c82(m);
-  else if(CALC_LID==7)res=(L7A&&L7A[CUR_FIPS])?c7a(m):c7(m);
-  else if(CALC_LID==36)res=c36(m,cv);
-  else if(CALC_LID!=null)res=cGeneric(CALC_LID,m);
+  else if(elid==82)res=c82(m);
+  else if(elid==7)res=(L7A&&L7A[CUR_FIPS])?c7a(m):c7(m);
+  else if(elid==36)res=c36(m,cv);
+  else if(elid!=null)res=cGeneric(elid,m);
   if(!res){out.innerHTML='';return;}
   // Hanford HSSA rendering — purple theme, different styling from standard amber
   if(res.hanford){
@@ -1191,6 +1203,52 @@ function updateCost(){
   out.innerHTML=h;
 }
 
+// ── Rate Zone toggle (top menu bar) ──────────────────────────────────────────
+// Shown only when the dispatch local and the destination county's local differ.
+// Lets the user flip the rate card between the two locals' tables against the
+// SAME road miles. Route, map line, mileage, drive time and zone rings never
+// change — only #calc-out (the rate card) is recalculated.
+function rateSegHtml(lid,activeLid){
+  var isActive=String(lid)===String(activeLid);
+  var color=LOCALS[lid]?LOCALS[lid].color:'#475569';
+  var bg=isActive?color+'1f':'transparent';
+  var bd=isActive?color+'88':'transparent';
+  var fg=isActive?color:'#94a3b8';
+  var fw=isActive?'700':'600';
+  var op=isActive?'1':'.65';
+  return '<button type="button" onclick="setRateLocal('+JSON.stringify(lid)+')"'
+    +' aria-pressed="'+(isActive?'true':'false')+'"'
+    +' title="Show Local '+lid+' rates for this mileage"'
+    +' style="background:'+bg+';border:1px solid '+bd+';border-radius:3px;padding:2px 8px;cursor:pointer;'
+    +'font-family:inherit;font-size:10px;letter-spacing:.5px;color:'+fg+';font-weight:'+fw+';opacity:'+op+';transition:all .12s">'
+    +'Local '+lid+'</button>';
+}
+function updateRateToggle(){
+  var wrap=document.getElementById('rate-toggle');
+  if(!wrap)return;
+  var dispLid=PRIMARY_DISPATCH?PRIMARY_DISPATCH.lid:null;
+  var destLid=CUR_LID;
+  // No toggle unless we have a dispatch, a mapped destination local, and they differ.
+  if(dispLid==null||destLid==null||!LOCALS[dispLid]||!LOCALS[destLid]||String(dispLid)===String(destLid)){
+    wrap.style.display='none';
+    wrap.innerHTML='';
+    return;
+  }
+  var active=(RATE_LID!=null)?RATE_LID:dispLid;
+  wrap.innerHTML='<span style="color:#64748b;font-weight:600">Rates:</span>'
+    +rateSegHtml(dispLid,active)
+    +'<span style="color:#cbd5e1">|</span>'
+    +rateSegHtml(destLid,active);
+  wrap.style.display='flex';
+}
+// Toggle handler — recalculates ONLY the rate card, then refreshes highlight.
+function setRateLocal(lid){
+  RATE_LID=lid;
+  updateCost();
+  updateRateToggle();
+}
+window.setRateLocal=setRateLocal;
+
 function rebuildCalc(){
   var rc=document.getElementById('rc');
   if(!rc)return;
@@ -1202,6 +1260,8 @@ function rebuildCalc(){
 function initCalc(){
   var rc=document.getElementById('rc');
   if(!rc||CUR_LAT===null)return;
+  // New selection — default the rate card back to the dispatch local.
+  RATE_LID=null;
   rc.querySelectorAll('.rcsec[data-calc="1"]').forEach(function(el){el.remove();});
   var sec=document.createElement('div');
   sec.className='rcsec';
@@ -1217,6 +1277,7 @@ function initCalc(){
       +'</div>';
     var firstSec=rc.querySelector('.rcsec:not([data-calc])');
     rc.insertBefore(sec,firstSec||rc.querySelector('.disc'));
+    updateRateToggle();
     return;
   }
 
@@ -1265,6 +1326,7 @@ function initCalc(){
   var firstSec=rc.querySelector('.rcsec:not([data-calc])');
   rc.insertBefore(sec,firstSec||rc.querySelector('.disc'));
   updateCost();
+  updateRateToggle();
 }
 
 // ── Dispatch Zone Rings ───────────────────────────────────────────────────────
@@ -1329,9 +1391,10 @@ function getZoneRings(lid,isA){
 
 function clearDispatchZones(){
   Object.keys(dispatchLGs).forEach(function(k){map.removeLayer(dispatchLGs[k]);});
-  dispatchLGs={};ACTIVE_STACK=[];PRIMARY_DISPATCH=null;CALC_LID=null;AUTO_SELECTED=false;
+  dispatchLGs={};ACTIVE_STACK=[];PRIMARY_DISPATCH=null;CALC_LID=null;RATE_LID=null;AUTO_SELECTED=false;
   clearRoute();
   document.querySelectorAll('.dp-btn').forEach(function(b){paintDpBtn(b,'inactive');});
+  updateRateToggle();
 }
 
 
@@ -1600,9 +1663,10 @@ function dpToggle(lid,name,lat,lng,btn){
   // Clicking the active primary again turns dispatch off entirely.
   if(state==='primary'&&isPrimary){
     clearAllDispatchRingsOnly();
-    PRIMARY_DISPATCH=null;CALC_LID=null;
+    PRIMARY_DISPATCH=null;CALC_LID=null;RATE_LID=null;
     clearRoute();
     if(CUR_LAT!==null)rebuildCalc();
+    updateRateToggle();
     return;
   }
 
