@@ -2,7 +2,7 @@
 // Bump CACHE_NAME whenever shipped assets change so clients pick them up.
 // SubWatt v2 — rates now live in Supabase, not data.json.
 // data.json is kept in the repo only as an offline last-resort fallback.
-const CACHE_NAME = 'subwatt-v31';
+const CACHE_NAME = 'subwatt-v32';
 const TILE_CACHE = 'subwatt-tiles-v1';
 const MAX_TILES  = 500;
 
@@ -15,9 +15,9 @@ const PRECACHE_URLS = [
   'admin.html',
   'manifest.json',
   'data.json',
-  'favicon.svg?v=2',
-  'icons/icon-192-v2.png',
-  'icons/icon-512-v2.png',
+  'favicon.svg?v=4',
+  'icons/icon-192-v3.png',
+  'icons/icon-512-v3.png',
 ];
 
 function isSupabaseRequest(url){
