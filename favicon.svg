@@ -2,5 +2,5 @@
   <ellipse cx="0" cy="26" rx="27" ry="7" fill="none" stroke="#2563eb" stroke-width="4"/>
   <ellipse cx="0" cy="26" rx="14" ry="3.5" fill="none" stroke="#2563eb" stroke-width="3.5"/>
   <path d="M0,22 C-3,14 -16,2 -16,-10 A16,16 0 1 1 16,-10 C16,2 3,14 0,22 Z" fill="#f97316" stroke="#2563eb" stroke-width="3.5" stroke-linejoin="round"/>
-  <circle cx="0" cy="-10" r="6.5" fill="#ffffff"/>
+  <circle cx="4" cy="-14.5" r="2.5" fill="#ffffff"/>
 </svg>
