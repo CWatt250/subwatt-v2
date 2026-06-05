@@ -1225,7 +1225,13 @@ function rateSegHtml(lid,activeLid){
   var fg=isActive?color:'#94a3b8';
   var fw=isActive?'700':'600';
   var op=isActive?'1':'.65';
-  return '<button type="button" onclick="setRateLocal('+JSON.stringify(lid)+')"'
+  // Carry the lid on a data attribute and wire the click via addEventListener
+  // in updateRateToggle() — NOT an inline onclick. dispLid arrives as the string
+  // "82" (split out of data-dp-meta), and JSON.stringify("82") emits "82" WITH
+  // double quotes, which closes the onclick="..." attribute early and leaves the
+  // dispatch-local button dead — so the toggle would switch to the destination
+  // local but never back. (Same trap the dispatch buttons already dodge.)
+  return '<button type="button" data-rate-lid="'+escSb(lid)+'"'
     +' aria-pressed="'+(isActive?'true':'false')+'"'
     +' title="Show Local '+lid+' rates for this mileage"'
     +' style="background:'+bg+';border:1px solid '+bd+';border-radius:3px;padding:2px 8px;cursor:pointer;'
@@ -1248,6 +1254,10 @@ function updateRateToggle(){
     +rateSegHtml(dispLid,active)
     +'<span style="color:#cbd5e1">|</span>'
     +rateSegHtml(destLid,active);
+  // Normalise lid to a Number so RATE_LID type matches CALC_LID/CUR_LID usage.
+  wrap.querySelectorAll('button[data-rate-lid]').forEach(function(b){
+    b.addEventListener('click',function(){setRateLocal(Number(b.getAttribute('data-rate-lid')));});
+  });
   wrap.style.display='flex';
 }
 // Toggle handler — recalculates ONLY the rate card, then refreshes highlight.
