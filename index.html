@@ -1587,6 +1587,13 @@ function findDpBtn(name){
 }
 
 function setPrimaryDispatch(lid,name,lat,lng){
+  // A new dispatch point is taking over — default the Rate Zone toggle back to
+  // this dispatch local's rates (RATE_LID=null means "follow the dispatch
+  // local"). initCalc() also resets this on rebuild, but reset it here too so a
+  // prior destination-local override can never stay pinned through a dispatch
+  // switch even on the edge path where the calc rebuild is skipped (CUR_LAT
+  // null). Mirrors first-load behaviour exactly.
+  RATE_LID=null;
   // Downgrade previous primary visually
   if(PRIMARY_DISPATCH){
     var prevBtn=findDpBtn(PRIMARY_DISPATCH.name);
