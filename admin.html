@@ -349,6 +349,22 @@ function buildRateEditor(row){
     html+='</tbody></table></div>';
   }
 
+  // ── Dispatch points ─────────────────────────────────────────────────────────
+  // Edits rate_config.dispatches (what the live map reads). Saving also syncs
+  // the normalized dispatch_points table — see saveLocal().
+  if(Array.isArray(cfg.dispatches)&&cfg.dispatches.length){
+    html+='<div class="rate-section"><div class="rate-section-label">Dispatch Points</div>';
+    html+='<table class="rate-table"><thead><tr><th>Name</th><th>Latitude</th><th>Longitude</th></tr></thead><tbody>';
+    cfg.dispatches.forEach(function(d,i){
+      html+='<tr>'
+        +'<td><input class="zone-label-input" data-path="dispatches.'+i+'.name" value="'+esc(d.name||'')+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="0.000001" data-path="dispatches.'+i+'.lat" value="'+esc(d.lat!=null?String(d.lat):'')+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
+        +'<td><input class="rate-input" type="number" step="0.000001" data-path="dispatches.'+i+'.lng" value="'+esc(d.lng!=null?String(d.lng):'')+'" onchange="markChanged(\''+row.id+'\',this)"/></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+
   if(!html) html='<div class="empty-state" style="padding:16px">No editable rate fields found in rate_config.</div>';
   return html;
 }
@@ -435,11 +451,28 @@ async function saveLocal(localId){
   var newCfg=mergeChanges(localId);
   if(!newCfg){toast('Error: local not found','error');return;}
 
+  // Capture which dispatch rows changed BEFORE we clear PENDING, so we can
+  // mirror them into the normalized dispatch_points table after the main save.
+  var changedDisp=(PENDING[localId]||{}).dispatches;
+
   var result=await supa.from('locals').update({rate_config:newCfg}).eq('id',localId);
   if(result.error){
     if(statusEl)statusEl.textContent='';
     toast('Save failed: '+result.error.message,'error');
     return;
+  }
+
+  // Keep dispatch_points in sync with rate_config.dispatches. Best-effort: the
+  // live map already reads rate_config, so a table-sync hiccup isn't fatal.
+  if(Array.isArray(changedDisp)){
+    try{
+      for(var di=0;di<changedDisp.length;di++){
+        if(!changedDisp[di])continue;
+        var full=newCfg.dispatches&&newCfg.dispatches[di];
+        if(!full||full.lat==null||full.lng==null||!full.name)continue;
+        await syncDispatchPoint(localId,full.name,full.lat,full.lng);
+      }
+    }catch(e){toast('dispatch_points sync warning: '+(e.message||e),'error');}
   }
 
   // Update local cache
@@ -455,6 +488,21 @@ async function saveLocal(localId){
   toast('Local '+localId+' saved','success');
   // Refresh audit log
   setTimeout(loadAudit,600);
+}
+
+// Upsert a single dispatch point into the dispatch_points table, matched by
+// (local_id, name). Renaming a dispatch inserts a new row rather than renaming
+// the old one — fine for coordinate edits, which is the common case.
+async function syncDispatchPoint(localId,name,lat,lng){
+  var existing=await supa.from('dispatch_points').select('id').eq('local_id',localId).eq('name',name);
+  if(existing.error)throw existing.error;
+  if(existing.data&&existing.data.length){
+    var u=await supa.from('dispatch_points').update({lat:lat,lng:lng}).eq('local_id',localId).eq('name',name);
+    if(u.error)throw u.error;
+  }else{
+    var ins=await supa.from('dispatch_points').insert({local_id:localId,name:name,lat:lat,lng:lng});
+    if(ins.error)throw ins.error;
+  }
 }
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
