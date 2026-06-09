@@ -531,6 +531,24 @@ function detectHanfordArea(lat,lng){
   return null;
 }
 
+// Resolve which local's territory a coordinate falls in, using the exact same
+// fipsToLocal lookup a county click uses. Walks the county polygons (Polygon
+// and MultiPolygon, outer ring only) and returns FL[fips], or null if the point
+// isn't inside any mapped county. Used to give an Irex branch a dispatch local.
+function localForLatLng(lat,lng){
+  for(var i=0;i<GEO.features.length;i++){
+    var f=GEO.features[i],g=f&&f.geometry;if(!g)continue;
+    var polys=(g.type==='MultiPolygon')?g.coordinates:[g.coordinates];
+    for(var p=0;p<polys.length;p++){
+      if(pointInPoly(lat,lng,polys[p][0])){
+        var lid=FL[f.id.toString()];
+        return (lid!=null)?lid:null;
+      }
+    }
+  }
+  return null;
+}
+
 // Render Hanford overlay layer
 var hanfordLayer=L.geoJSON(HANFORD_GEO,{
   style:function(f){
@@ -651,9 +669,14 @@ function useIrexAsDispatch(branchId){
     map.flyTo([b.lat,b.lng],8,{duration:.9});
     return;
   }
-  // Use whichever local applies to the active destination. If no local
-  // (county outside any jurisdiction), we still route — but rate will be N/A.
-  var lid=CUR_LID||(CALC_LID!=null?CALC_LID:null);
+  // Dispatch local = the local whose territory the BRANCH itself sits in,
+  // resolved with the same fipsToLocal lookup a county click uses. Irex
+  // branches aren't tied to a local directly, so without this the rate toggle
+  // can't tell dispatch-local from destination-local and never appears.
+  var branchLid=localForLatLng(b.lat,b.lng);
+  // Fallback chain if the branch coords don't resolve to a mapped local:
+  // destination local, then nearest dispatch's local — so we still route.
+  var lid=(branchLid!=null&&LOCALS[branchLid])?branchLid:(CUR_LID||(CALC_LID!=null?CALC_LID:null));
   if(!lid){
     // Pick nearest local as a courtesy
     var nr=findNearestAcrossAll(CUR_LAT,CUR_LNG);
