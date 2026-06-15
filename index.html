@@ -957,7 +957,7 @@ function mbxSuggest(q,cb){
     +'&access_token='+MAPBOX_TOKEN
     +'&session_token='+SESSION_TOKEN
     +'&country=us'
-    +'&bbox=-125.0,41.0,-103.0,49.5'
+    +'&bbox=-125,28,-95,50'
     +'&types=address,place,poi'
     +'&limit=5';
   fetch(url).then(function(r){return r.json();}).then(function(data){
