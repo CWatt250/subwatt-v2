@@ -958,8 +958,10 @@ function mbxSuggest(q,cb){
     +'&access_token='+MAPBOX_TOKEN
     +'&session_token='+SESSION_TOKEN
     +'&country=us'
+    +'&language=en'
     +'&bbox=-125,28,-95,50'
-    +'&types=address,place,poi'
+    +'&proximity=-113.0,45.5'
+    +'&types=place,locality,neighborhood,district,region,postcode'
     +'&limit=5';
   fetch(url).then(function(r){return r.json();}).then(function(data){
     cb((data&&data.suggestions)||[]);
