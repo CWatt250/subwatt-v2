@@ -961,7 +961,7 @@ function mbxSuggest(q,cb){
     +'&language=en'
     +'&bbox=-125,28,-95,50'
     +'&proximity=-113.0,45.5'
-    +'&types=place,locality,neighborhood,district,region,postcode'
+    +'&types=place,locality,neighborhood,district,region,postcode,address,street'
     +'&limit=5';
   fetch(url).then(function(r){return r.json();}).then(function(data){
     cb((data&&data.suggestions)||[]);
