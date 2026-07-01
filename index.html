@@ -1501,7 +1501,13 @@ function drawRoute(fromLat,fromLng,fromName,toLat,toLng,color){
     renderRoute(cached.geometry,cached.miles,cached.timeStr||null,fromName,color);
     return;
   }
-  var url='https://api.mapbox.com/directions/v5/mapbox/driving/'
+  // Use driving-traffic (typical/live speeds) not plain driving. The plain
+  // driving profile uses conservative free-flow defaults that badly under-
+  // estimate speed on rural WA highways (e.g. Pasco->Pomeroy came back at
+  // 33 mph / 2h21m for a 78 mi route; driving-traffic returns ~49 mph /
+  // 1h35m, matching Google). Same road geometry either way — only the speed
+  // model differs. Mapbox returns the fastest route first, so we keep [0].
+  var url='https://api.mapbox.com/directions/v5/mapbox/driving-traffic/'
     +fromLng+','+fromLat+';'+toLng+','+toLat
     +'?geometries=geojson&overview=full&access_token='+MAPBOX_TOKEN;
   var fetchOpts={};
