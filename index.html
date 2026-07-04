@@ -165,7 +165,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
 
   #sidebar{display:none}
   /* Map fills space between topbar and the collapsed sheet (sheet overlays bottom) */
-  #mw{flex:1 1 0;min-height:0;height:calc(100vh - 48px - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));height:calc(100dvh - 48px - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))}
+  #mw{flex:1 1 0;min-height:0}  /* map fills; the in-flow sheet below takes its own space */
   .hud{display:none}
 
   #statusbar{display:none}
@@ -180,12 +180,12 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
   #mobile-menu .mm-btn.inst{background:#2563eb;border-color:#1d4ed8;color:#fff}
 
   /* Bottom sheet — anchored flush at viewport bottom, with home-indicator safe-area */
-  #mobile-sheet{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;height:calc(80px + env(safe-area-inset-bottom, 0px));padding-bottom:env(safe-area-inset-bottom, 0px);transition:height .25s ease;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -4px 16px rgba(15,23,42,.08);z-index:800;overflow:hidden}
-  #mobile-sheet.mobile-sheet--expanded{height:calc(35vh + env(safe-area-inset-bottom, 0px))}
+  #mobile-sheet{display:flex;flex-direction:column;flex:0 0 auto;position:relative;padding-bottom:env(safe-area-inset-bottom, 0px);background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -4px 20px rgba(15,23,42,.10);z-index:800;overflow:hidden;max-height:calc(92px + env(safe-area-inset-bottom, 0px));transition:max-height .28s cubic-bezier(.4,0,.2,1)}
+  #mobile-sheet.mobile-sheet--expanded{max-height:calc(60dvh + env(safe-area-inset-bottom, 0px))}
   #mobile-sheet .ms-handle{width:36px;height:4px;background:#94a3b8;border-radius:2px;margin:8px auto 4px;flex-shrink:0;cursor:pointer}
   #mobile-sheet .ms-peek{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px;cursor:pointer;flex-shrink:0;min-height:48px;gap:12px}
   #mobile-sheet .ms-peek-county{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-  #mobile-sheet .ms-peek-rate{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#2563EB;flex-shrink:0;text-align:right;line-height:1}
+  #mobile-sheet .ms-peek-rate{font-family:'Space Mono',monospace;font-size:27px;font-weight:700;color:#2563EB;flex-shrink:0;text-align:right;line-height:1}
   #mobile-sheet .ms-peek-empty{font-family:'DM Sans',sans-serif;font-size:12px;color:#94a3b8;flex:1}
   #mobile-sheet .ms-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;padding-bottom:12px}
   #mobile-sheet:not(.mobile-sheet--expanded) .ms-body{display:none}
@@ -324,17 +324,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
     <div id="sbc">—</div>
     <div style="margin-left:auto;font-style:italic;color:#64748b">Created by Colton Watt</div>
   </div>
-</div>
-
-<div id="mobile-menu" aria-hidden="true">
-  <div class="mm-panel">
-    <button type="button" class="mm-btn help" data-mm-action="help"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button>
-    <button type="button" class="mm-btn exp" data-mm-action="export"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button>
-    <button type="button" class="mm-btn inst" data-mm-action="install" style="display:none">Install App</button>
-  </div>
-</div>
-
-<div id="mobile-sheet" aria-hidden="true">
+  <div id="mobile-sheet" aria-hidden="true">
   <div class="ms-handle" id="mobile-sheet-handle"></div>
   <div class="ms-peek" id="mobile-sheet-peek">
     <div class="ms-peek-county" id="mobile-sheet-county" style="display:none"></div>
@@ -346,6 +336,15 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
       <div class="hero-rate" id="mobile-sheet-hero-rate"></div>
       <div class="hero-zone" id="mobile-sheet-hero-zone"></div>
     </div>
+  </div>
+</div>
+</div>
+
+<div id="mobile-menu" aria-hidden="true">
+  <div class="mm-panel">
+    <button type="button" class="mm-btn help" data-mm-action="help"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>How to use</button>
+    <button type="button" class="mm-btn exp" data-mm-action="export"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export PDF</button>
+    <button type="button" class="mm-btn inst" data-mm-action="install" style="display:none">Install App</button>
   </div>
 </div>
 
