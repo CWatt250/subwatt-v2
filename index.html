@@ -198,6 +198,10 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
   #mobile-sheet-hero.has-content{display:block}
   #mobile-sheet-hero .hero-rate{font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:#2563EB;line-height:1.05}
   #mobile-sheet-hero .hero-zone{font-size:11px;color:#94a3b8;margin-top:3px;letter-spacing:.3px}
+  /* Rate Zone toggle relocated into the hero on mobile (see relocateRcForViewport).
+     Inline styles set 10px desktop sizing, so override with !important for touch. */
+  #mobile-sheet-hero #rate-toggle{margin-top:10px;font-size:12px !important;flex-wrap:wrap}
+  #mobile-sheet-hero #rate-toggle button{font-size:12px !important;padding:6px 14px !important;min-height:36px}
 
   /* Search dropdown — full viewport width and readable so iOS Safari doesn't auto-zoom */
   #search-dd{position:fixed !important;top:calc(50px + env(safe-area-inset-top, 0px)) !important;left:6px !important;right:6px !important;font-size:14px !important;max-height:60vh;overflow-y:auto}
@@ -1686,20 +1690,59 @@ function drawDispatchRings(lid,name,lat,lng){
       icon:L.divIcon({className:'',html:labelHtml,iconSize:[0,0],iconAnchor:[0,0]}),interactive:false
     }).addTo(lg);
   });
+  // A "moved" dispatch is one the user has dragged off its real hall city to
+  // model a worker who lives elsewhere. Same rate schedule (lid), just a new
+  // origin \u2014 so the label flags it and the ring/route/per-diem recompute.
+  var isMoved=!!(PRIMARY_DISPATCH&&PRIMARY_DISPATCH.name===name&&PRIMARY_DISPATCH.moved);
+  var pinLabel=name.split(',')[0]+(isMoved?' \u00b7 moved':'');
   var dispHtml=
     '<div style="transform:translateX(-50%) translateY(-100%);text-align:center;pointer-events:none">'
       +'<div style="background:'+lc+';color:#fff;font-family:Space Mono,monospace;font-size:10px;'
         +'font-weight:700;padding:3px 10px;border-radius:4px;white-space:nowrap;'
-        +'box-shadow:0 2px 8px rgba(0,0,0,.2);letter-spacing:.5px">'+name.split(',')[0]+'</div>'
+        +'box-shadow:0 2px 8px rgba(0,0,0,.2);letter-spacing:.5px">'+pinLabel+'</div>'
       +'<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;'
         +'border-top:8px solid '+lc+';margin:0 auto"></div>'
     +'</div>'
     +'<div style="width:14px;height:14px;background:'+lc+';border:3px solid #fff;border-radius:50%;'
-      +'box-shadow:0 0 12px '+lc+'cc;margin:-7px 0 0 -7px"></div>';
-  L.marker([lat,lng],{
-    icon:L.divIcon({className:'',html:dispHtml,iconSize:[0,0]})
-  }).bindTooltip('<b>'+name+'</b> \u2014 dispatch point').addTo(lg);
+      +'box-shadow:0 0 12px '+lc+'cc;margin:-7px 0 0 -7px;cursor:grab"></div>';
+  // draggable: grab the pin and drop it to reposition the origin (e.g. a worker
+  // living in Walla Walla). zIndexOffset keeps it above the rings so it's grabbable.
+  var dispMk=L.marker([lat,lng],{
+    icon:L.divIcon({className:'',html:dispHtml,iconSize:[0,0]}),
+    draggable:true,autoPan:true,zIndexOffset:800
+  }).bindTooltip('<b>'+name+'</b> \u2014 '+(isMoved?'moved origin':'dispatch point')+' \u00b7 drag to set worker origin').addTo(lg);
+  dispMk.on('dragend',function(e){onDispatchDragEnd(lid,name,e.target.getLatLng());});
   return lg;
+}
+
+// Fired when the user drops a dragged dispatch pin. Keeps the same rate
+// schedule (lid) but re-centers the origin on the drop point, then recomputes
+// the rings, the road route, and the per-diem/travel-pay calc from there.
+function onDispatchDragEnd(lid,name,latlng){
+  var lat=latlng.lat,lng=latlng.lng;
+  AUTO_SELECTED=false;
+  // Promote the dragged pin to primary so the route follows it (no-op if it
+  // already was). Downgrade whatever was primary before.
+  if(PRIMARY_DISPATCH&&PRIMARY_DISPATCH.name!==name){
+    var pb=findDpBtn(PRIMARY_DISPATCH.name);
+    if(pb&&dispatchLGs[PRIMARY_DISPATCH.name])paintDpBtn(pb,'active');
+  }
+  PRIMARY_DISPATCH={lid:lid,name:name,lat:lat,lng:lng,moved:true};
+  CALC_LID=lid;
+  ACTIVE_STACK=[name].concat(ACTIVE_STACK.filter(function(n){return n!==name;}));
+  var btn=findDpBtn(name);
+  if(btn)paintDpBtn(btn,'primary');
+  // Redraw this dispatch's rings centered on the new origin (marker included).
+  if(dispatchLGs[name]){try{map.removeLayer(dispatchLGs[name]);}catch(e){}}
+  var lg=drawDispatchRings(lid,name,lat,lng);
+  dispatchLGs[name]=lg;lg.addTo(map);
+  // Re-route + recalc from the moved origin. drawRoute -> renderRoute refreshes
+  // the mileage input and calls updateCost once the road route returns.
+  if(CUR_LAT!==null&&CUR_LNG!==null){
+    var lc=LOCALS[lid]?LOCALS[lid].color:'#2563eb';
+    drawRoute(lat,lng,name.split(',')[0],CUR_LAT,CUR_LNG,lc);
+    rebuildCalc();
+  }
 }
 
 // Strip every dispatch's ring layer + reset every button to inactive, but
@@ -2019,7 +2062,14 @@ loadData()
 <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW registration failed',e);});
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+      // index.html is served cache-first, so a phone only sees new versions
+      // after the SW re-installs. Re-check whenever the app is (re)opened so
+      // an installed PWA doesn't sit on a stale build for days.
+      document.addEventListener('visibilitychange',function(){
+        if(document.visibilityState==='visible')reg.update().catch(function(){});
+      });
+    }).catch(function(e){console.warn('SW registration failed',e);});
   });
 }
 var deferredPrompt=null;
@@ -2058,15 +2108,27 @@ window.addEventListener('appinstalled',function(){
     var sbl=sbInner?sbInner.querySelector(':scope > .sbl'):null;
     var sheetBody=document.getElementById('mobile-sheet-body');
     if(!rc)return;
+    var toggle=document.getElementById('rate-toggle');
+    var hero=document.getElementById('mobile-sheet-hero');
     if(isMobile()){
       if(sheetBody){
-        if(sbl && sbl.parentNode!==sheetBody)sheetBody.appendChild(sbl);
+        // Rate card FIRST so the actual rate + calc sit right under the hero;
+        // the jurisdictions list goes below it.
         if(rc.parentNode!==sheetBody)sheetBody.appendChild(rc);
+        if(sbl && sbl.parentNode!==sheetBody)sheetBody.appendChild(sbl);
       }
+      // Rate Zone toggle lives in .tb-right (hidden on mobile) — move it into
+      // the hero block so cross-local rate switching works on phones too.
+      if(toggle&&hero&&toggle.parentNode!==hero)hero.appendChild(toggle);
     }else{
       if(sbInner){
         if(sbl && sbl.parentNode!==sbInner)sbInner.insertBefore(sbl,sbInner.firstChild);
         if(rc.parentNode!==sbInner)sbInner.appendChild(rc);
+      }
+      // Restore the toggle to its desktop slot (right after the Irex button).
+      var irex=document.getElementById('btn-irex');
+      if(toggle&&irex&&toggle.parentNode!==irex.parentNode){
+        irex.parentNode.insertBefore(toggle,irex.nextSibling);
       }
     }
   }
