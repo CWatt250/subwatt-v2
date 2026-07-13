@@ -535,22 +535,28 @@ function detectHanfordArea(lat,lng){
   return null;
 }
 
-// Resolve which local's territory a coordinate falls in, using the exact same
-// fipsToLocal lookup a county click uses. Walks the county polygons (Polygon
-// and MultiPolygon, outer ring only) and returns FL[fips], or null if the point
-// isn't inside any mapped county. Used to give an Irex branch a dispatch local.
-function localForLatLng(lat,lng){
+// Resolve which county feature a coordinate falls in. Walks the county
+// polygons (Polygon and MultiPolygon, outer ring only) and returns the
+// GeoJSON feature, or null if the point isn't inside any county.
+function featureForLatLng(lat,lng){
   for(var i=0;i<GEO.features.length;i++){
     var f=GEO.features[i],g=f&&f.geometry;if(!g)continue;
     var polys=(g.type==='MultiPolygon')?g.coordinates:[g.coordinates];
     for(var p=0;p<polys.length;p++){
-      if(pointInPoly(lat,lng,polys[p][0])){
-        var lid=FL[f.id.toString()];
-        return (lid!=null)?lid:null;
-      }
+      if(pointInPoly(lat,lng,polys[p][0]))return f;
     }
   }
   return null;
+}
+
+// Resolve which local's territory a coordinate falls in, using the exact same
+// fipsToLocal lookup a county click uses. Returns FL[fips], or null if the
+// point isn't inside any mapped county. Used to give an Irex branch a dispatch local.
+function localForLatLng(lat,lng){
+  var f=featureForLatLng(lat,lng);
+  if(!f)return null;
+  var lid=FL[f.id.toString()];
+  return (lid!=null)?lid:null;
 }
 
 // Render Hanford overlay layer
@@ -1061,25 +1067,20 @@ function flyToCoord(lat,lng){
   map.flyTo([lat,lng],10,{duration:1});
   setTimeout(function(){
     if(!cl)return;
-    var pt=L.latLng(lat,lng),found=false;
-    cl.eachLayer(function(layer){
-      if(found)return;
-      try{
-        if(layer.getBounds().contains(pt)){
-          var ft=layer.feature,fp=ft.id.toString(),lid=FL[fp],sf=String(ft.id).padStart(5,'0').slice(0,2);
-          var cn=(ft.properties&&ft.properties.name)?ft.properties.name+' County, '+(SA[sf]||''):'FIPS '+fp;
-          CUR_FIPS=fp;CUR_LID=lid||null;
-          CUR_HANFORD=detectHanfordArea(lat,lng);
-          var hanfordColor=CUR_HANFORD?HANFORD_AREAS[CUR_HANFORD].color:null;
-          pm(lat,lng,hanfordColor||(lid?LOCALS[lid].color:'#888'));
-          sr(lid?LOCALS[lid]:null,cn,lid);
-          showCountyLabel(cn,lat,lng,hanfordColor||(lid?LOCALS[lid].color:'#475569'));
-          autoSelectDispatch();
-          if(PRIMARY_DISPATCH){var pc=LOCALS[PRIMARY_DISPATCH.lid]?LOCALS[PRIMARY_DISPATCH.lid].color:'#2563eb';drawRoute(PRIMARY_DISPATCH.lat,PRIMARY_DISPATCH.lng,PRIMARY_DISPATCH.name.split(',')[0],lat,lng,pc);}
-          found=true;
-        }
-      }catch(ex){}
-    });
+    // True point-in-polygon — bounding boxes overlap along county borders
+    // (e.g. Quincy, WA sits in Douglas County's bbox but Grant County's polygon).
+    var ft=featureForLatLng(lat,lng);
+    if(!ft)return;
+    var fp=ft.id.toString(),lid=FL[fp],sf=String(ft.id).padStart(5,'0').slice(0,2);
+    var cn=(ft.properties&&ft.properties.name)?ft.properties.name+' County, '+(SA[sf]||''):'FIPS '+fp;
+    CUR_FIPS=fp;CUR_LID=lid||null;
+    CUR_HANFORD=detectHanfordArea(lat,lng);
+    var hanfordColor=CUR_HANFORD?HANFORD_AREAS[CUR_HANFORD].color:null;
+    pm(lat,lng,hanfordColor||(lid?LOCALS[lid].color:'#888'));
+    sr(lid?LOCALS[lid]:null,cn,lid);
+    showCountyLabel(cn,lat,lng,hanfordColor||(lid?LOCALS[lid].color:'#475569'));
+    autoSelectDispatch();
+    if(PRIMARY_DISPATCH){var pc=LOCALS[PRIMARY_DISPATCH.lid]?LOCALS[PRIMARY_DISPATCH.lid].color:'#2563eb';drawRoute(PRIMARY_DISPATCH.lat,PRIMARY_DISPATCH.lng,PRIMARY_DISPATCH.name.split(',')[0],lat,lng,pc);}
   },1100);
 }
 
