@@ -1136,6 +1136,25 @@ document.addEventListener('mousedown',function(e){
 });
 
 setTimeout(function(){map.invalidateSize();},200);
+
+// Deep link: ?q=Goldendale%20WA auto-runs the search (WattBot "pull up SubWatt
+// for X" lands here). Waits a beat so the map + county layer are up first.
+(function(){
+  var q;
+  try{q=new URLSearchParams(location.search).get('q');}catch(e){return;}
+  if(!q)return;
+  setTimeout(function(){
+    document.getElementById('si').value=q;
+    mbxSuggest(q,function(suggestions){
+      if(suggestions&&suggestions.length){
+        searchSuggestions=suggestions;
+        selectSuggestion(0);
+      } else {
+        document.getElementById('sbm').textContent='"'+q+'" not found';
+      }
+    });
+  },600);
+})();
 // ── Cost Calculator ──────────────────────────────────────────────────────────
 var CUR_LAT=null,CUR_LNG=null,CUR_LID=null,CUR_FIPS=null,CALC_LID=null,CUR_HANFORD=null;
 // Populated only when the user picks a suggestion from search; cleared on county click / Clear / legend fly-to
