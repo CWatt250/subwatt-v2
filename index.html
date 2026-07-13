@@ -1981,12 +1981,20 @@ function exportPdf(){
       var miEl=document.getElementById('calc-mi');
       var miles=miEl?miEl.value:'\u2014';
       var outEl=document.getElementById('calc-out');
-      var zoneLbl='',rate='';
+      var zoneLbl='',rate='',rateNote='';
       if(outEl){
         var zEl=outEl.querySelector('div[style*="text-transform:uppercase"]');
         if(zEl)zoneLbl=zEl.textContent;
         var rEl=outEl.querySelector('div[style*="Space Mono"]');
-        if(rEl)rate=rEl.textContent.trim();
+        if(rEl){
+          rate=rEl.textContent.trim();
+          // The calc breakdown ("$0.67 × 3 mi × 2 (round-trip...)", zone calcNote,
+          // or HSSA note) is always the div right after the rate — same text for
+          // every calc kind since it's scraped, not rebuilt. Skip the purple
+          // "Alt:" sub-line, which is a separate row, not the breakdown.
+          var nEl=rEl.nextElementSibling;
+          if(nEl&&nEl.textContent&&nEl.textContent.indexOf('Alt:')!==0)rateNote=nEl.textContent.trim();
+        }
       }
       var hanfordBadge='';
       if(typeof CUR_HANFORD!=='undefined' && CUR_HANFORD && typeof HANFORD_AREAS!=='undefined' && HANFORD_AREAS[CUR_HANFORD]){
@@ -2004,7 +2012,7 @@ function exportPdf(){
       rows.push(['Road miles',milesVal]);
       if(hanfordBadge) rows.push(['Hanford area',hanfordBadge]);
       rows.push(['Zone',zoneLbl||'\u2014']);
-      rows.push(['Daily travel rate',rate||'\u2014']);
+      rows.push(['Daily travel rate',rate||'\u2014',rateNote]);
 
       var topY=margin+0.65+shift;
       var bottomY=pageH-margin-0.35+shift;
@@ -2037,7 +2045,14 @@ function exportPdf(){
         var valStr=String(rows[i][1]);
         var wrapped=pdf.splitTextToSize(valStr,colW);
         pdf.text(wrapped,colX,y);
-        y+=(0.18*wrapped.length)+0.08;
+        y+=(0.18*wrapped.length);
+        if(rows[i][2]){
+          pdf.setFont('helvetica','normal');pdf.setFontSize(7.5);pdf.setTextColor(148,163,184);
+          var noteWrapped=pdf.splitTextToSize(String(rows[i][2]),colW);
+          pdf.text(noteWrapped,colX,y-0.02);
+          y+=(0.12*noteWrapped.length);
+        }
+        y+=0.08;
         pdf.setDrawColor(241,245,249);pdf.setLineWidth(0.008);
         pdf.line(colX,y-0.05,colX+colW,y-0.05);
       }
