@@ -1148,7 +1148,16 @@ setTimeout(function(){map.invalidateSize();},200);
     mbxSuggest(q,function(suggestions){
       if(suggestions&&suggestions.length){
         searchSuggestions=suggestions;
-        selectSuggestion(0);
+        // Proximity bias can rank a fuzzy match first (Goldendale → Glendale MT);
+        // prefer the suggestion whose NAME matches what was actually asked for.
+        var ql=q.toLowerCase().replace(/,.*$/,'').replace(/\s+(wa|or|id|mt|ut|wy|az|nm|co|nv)\.?$/i,'').trim();
+        var idx=0;
+        for(var i=0;i<suggestions.length;i++){
+          var n=(suggestions[i].name||'').toLowerCase();
+          if(n===ql){idx=i;break;}
+          if(idx===0&&n.indexOf(ql)===0&&(suggestions[0].name||'').toLowerCase()!==ql)idx=i;
+        }
+        selectSuggestion(idx);
       } else {
         document.getElementById('sbm').textContent='"'+q+'" not found';
       }
