@@ -1278,17 +1278,24 @@ function c76(m){
   return null;
 }
 
-// Local 28 (Denver): Board & Room is an alternative arrangement on jobs beyond
-// 80 mi (lodging/board provided or substituted + daily IRS mileage from the
-// nearest liveable town) — not a mileage band, so it rides along as a note on
-// the Zone 2 result rather than a computed amount.
+// Local 28 (Denver): beyond 80 mi the Zone 2 cash ($10/hr ≈ $80/day) IS the
+// board-and-room subsistence; the employer may substitute provided lodging &
+// board for it (CBA Art. VI). On Board & Room jobs the CBA also pays IRS
+// mileage Denver City Hall ↔ project on the first check and again at
+// completion — one round trip per project (reporting half forfeited if the
+// employee quits before 120 hours). The daily liveable-town mileage depends
+// on lodging location and isn't computed.
 function c28(m){
   var r=cGeneric(28,m);
   if(!r)return r;
   var zs=(LOCALS[28]&&LOCALS[28].travelZones)||[],band=null,board=null;
   zs.forEach(function(z){if(/board/i.test(z.label||''))board=z;else if(z.maxMi!=null)band=z;});
-  if(board&&band&&m>band.maxMi)
-    r.n=(r.n?r.n+' · ':'')+'Alt: '+(board.rate||'Board & Room')+' — '+(board.calcNote||'lodging/board provided or substituted');
+  if(board&&band&&m>band.maxMi){
+    r.mi=+(IRS_MILEAGE_RATE*m*2).toFixed(2);
+    r.miLabel='travel in/out';
+    r.miNote=fmtCentsPerMi(IRS_MILEAGE_RATE)+' × '+m+' mi × 2 (Denver City Hall ↔ project) · once per project, Board & Room jobs only';
+    r.n=(r.n?r.n+' · ':'')+'Alt: employer may substitute provided lodging & board for the daily cash (union notification required); daily IRS mileage from nearest liveable town beyond 5 mi also applies (not computed)';
+  }
   return r;
 }
 
