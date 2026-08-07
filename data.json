@@ -63,7 +63,7 @@
         "perDiemNote": "$150/day — all workers regardless of transport"
       },
       "appendixA": {
-        "label": "Appendix A — Central WA Work Preservation (Chelan, Douglas, Kittitas, Okanogan, Yakima)",
+        "label": "Central WA — Chelan, Douglas, Kittitas, Okanogan & Yakima counties",
         "fipsOverride": {
           "53007": 1,
           "53017": 1,
