@@ -1204,6 +1204,30 @@ function c36(m,cv){
   for(var i=0;i<zones.length;i++){var z=zones[i];if(z.maxMi===null||m<=z.maxMi){var r={z:z.calcLabel,c:cv?z.cvAmount:z.amount};var n=cv?(z.cvCalcNote||''):(z.calcNote||'');if(n)r.n=n;if(z.altAmount!==undefined)r.alt=cv?z.cvAltAmount:z.altAmount;return r;}}
 }
 
+// IRS standard business mileage rate, effective 7/1/2026. A zone can override
+// via a mileageRate field in rate_config; this constant is the fallback.
+var IRS_MILEAGE_RATE=0.76;
+function c73(m){
+  var L=LOCALS[73];
+  if(!L||!Array.isArray(L.travelZones)||!L.travelZones.length)return null;
+  for(var i=0;i<L.travelZones.length;i++){
+    var z=L.travelZones[i];
+    if(z.maxMi===null||m<=z.maxMi){
+      var r={z:z.calcLabel||z.label,c:(z.amount!=null?z.amount:0)};
+      if(z.calcNote)r.n=z.calcNote;
+      // Terminal (subsistence) zone: $95/day PLUS IRS mileage, paid once per
+      // project on one-way miles from dispatch City Hall — not part of the
+      // daily rate, so it renders as its own line.
+      if(z.maxMi===null){
+        var rate=(z.mileageRate!=null?z.mileageRate:IRS_MILEAGE_RATE);
+        r.mi=+(rate*m).toFixed(2);
+        r.miNote=(+(rate*100).toFixed(1))+'¢/mi × '+m+' mi · one way, once per project';
+      }
+      return r;
+    }
+  }
+}
+
 // Generic per-zone lookup for any local with a travelZones array.
 // Used by all locals that aren't 82 / 7 / 36 (which have custom shapes).
 function cGeneric(lid,m){
@@ -1241,6 +1265,7 @@ function updateCost(){
   else if(elid==82)res=c82(m);
   else if(elid==7)res=(L7A&&L7A[CUR_FIPS])?c7a(m):c7(m);
   else if(elid==36)res=c36(m,cv);
+  else if(elid==73)res=c73(m);
   else if(elid!=null)res=cGeneric(elid,m);
   if(!res){out.innerHTML='';return;}
   // Hanford HSSA rendering — purple theme, different styling from standard amber
@@ -1265,6 +1290,7 @@ function updateCost(){
     h+='<div style="font-family:Space Mono,monospace;font-size:26px;color:#d97706;font-weight:700">$'+res.c.toFixed(2)+'<span style="font-size:10px;color:#92400e;margin-left:8px">/ worker / day</span></div>';
     if(res.n)h+='<div style="font-size:10px;color:#b45309;margin-top:3px">'+res.n+'</div>';
     if(res.alt!==undefined)h+='<div style="font-size:10px;color:#7c3aed;margin-top:3px;padding-top:3px;border-top:1px solid #fde68a">Alt: <span style="font-family:Space Mono,monospace;color:#7c3aed">$'+res.alt.toFixed(2)+'/day</span></div>';
+    if(res.mi!==undefined)h+='<div id="calc-mileage-line" style="font-size:10px;color:#1e5fa8;margin-top:3px;padding-top:3px;border-top:1px solid #fde68a">+ <span style="font-family:Space Mono,monospace;font-size:14px;font-weight:700;color:#1e5fa8">$'+res.mi.toFixed(2)+'</span> mileage <span style="color:#64748b">· '+(res.miNote||'')+'</span></div>';
   }
   h+='</div>';
   out.innerHTML=h;
@@ -2014,6 +2040,13 @@ function exportPdf(){
       if(hanfordBadge) rows.push(['Hanford area',hanfordBadge]);
       rows.push(['Zone',zoneLbl||'\u2014']);
       rows.push(['Daily travel rate',rate||'\u2014',rateNote]);
+      // One-time mileage line (Local 73 Zone 3): rendered as its own row so it
+      // never reads as part of the daily rate.
+      var mlEl=outEl?outEl.querySelector('#calc-mileage-line'):null;
+      if(mlEl){
+        var mlAmt=mlEl.querySelector('span');
+        rows.push(['One-time mileage',(mlAmt?mlAmt.textContent.trim():'\u2014'),mlEl.textContent.replace(/^\+\s*/,'').trim()]);
+      }
 
       var topY=margin+0.65+shift;
       var bottomY=pageH-margin-0.35+shift;
