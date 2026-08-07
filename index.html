@@ -526,6 +526,45 @@ var IRS_MILEAGE_RATE=0.76;
       legendText:'Striped: 18 subsistence counties — $100–$140/day + $60 in/out'};
   }
 
+  // Local 36 — 2026–2029 Master Agreement (Art. XXV, eff. 3/23/2026; rates
+  // flat all three years). The stored Zone 5 company-vehicle figures
+  // ($135/$75) don't exist in this CBA: the zone table says "current Zone 5
+  // if stay or $90 if driven" while §25.1(f) says Zone 4 rate ($85) if driven
+  // and the wage Schedule A amount (not attached) if staying. Also surfaces
+  // the coastal-resort upgrade and the emergency-overnight rule.
+  if(LOCALS[36]&&Array.isArray(LOCALS[36].travelZones)&&LOCALS[36].travelZones.length>=5){
+    var zs36=LOCALS[36].travelZones,z363=zs36[2],z364=zs36[3],z365=zs36[4];
+    z365.cvRate='Zone 5 if stay / $85 driven';
+    z365.cvAmount=160;z365.cvAltAmount=85;
+    z365.cvCalcNote='$160/day stay overnight (company-vehicle overnight figure lives on wage Schedule A) — or $85/day if driven daily (§25.1(f) Zone 4 rate; the zone table prints $90 — verify with hall)';
+    z365.calcNote='$160/day stay overnight — or $90/day drive-only · one-day Zone 5 job pays IRS mileage from Portland round trip + $30 meals · 6 scheduled days in Zone 4/5 pays 7 days per diem';
+    z363.note='Coastal resort towns in this band: Zone 5 rate ($160)';
+    z363.calcNote='Coastal resort towns in this band pay the Zone 5 rate ($160/day)';
+    z364.calcNote='Overnight stay due to weather, extended OT, or emergency pays the Zone 5 rate ($160/day) — also when overtime beyond the regular schedule forces a stay';
+    LOCALS[36].cba='CBA 3/23/2026–2/25/2029 · rates flat all three years';
+    LOCALS[36].subsNote='Zones measure by shortest route from Portland City Hall — or from Medford, Eugene, Bend, or Hermiston City Hall for residents of those areas (drag the dispatch pin to match the worker’s home base; area residents are zoned from their own City Hall). Zone 5: 30-day residents within 30 mi of the jobsite are in a free zone; 10-mi free zone from lodging/nearest town, IRS mileage beyond 20 mi round trip. Zone pay prorates hourly under a full shift. Parking, bridge tolls & $3 transit reimbursed.';
+  }
+
+  // Local 82 — CBA 8/1/2023–7/31/2027. The stored jurisdiction text claimed
+  // "19 counties east of the Cascade crest"; Article 1 enumerates 14 (the
+  // county map itself was already right). Zones measure from the city hall
+  // nearest the worker's declared residence — there are no fixed dispatch
+  // points in the CBA; the app's pins are draggable stand-ins. Zone 6 is a
+  // conditional band and Coeur d'Alene is a named free zone for Spokane
+  // residents (Art. 12).
+  if(LOCALS[82]){
+    LOCALS[82].jurisdiction='Eastern Washington: Adams, Asotin, Benton, Columbia, Ferry, Franklin, Garfield, Grant, Lincoln, Pend Oreille, Spokane, Stevens, Walla Walla & Whitman counties; Northern Idaho: Benewah, Bonner, Boundary, Clearwater, Idaho, Kootenai, Latah, Lewis, Nez Perce & Shoshone counties; and all of Montana (56 counties).';
+    LOCALS[82].subsNote='Zones measure by road miles from the city hall nearest the worker’s declared residence — drag the dispatch pin to their home town (residence changes take 60 days to apply). Zone 6 (60–70 mi): $65/day commuting, or full subsistence with lodging receipts. No subsistence on one-day jobs; no travel allowance in a company vehicle with company fuel. Coeur d’Alene is a free zone for Spokane residents.';
+    if(Array.isArray(LOCALS[82].travelZones)){
+      var hr82={30:'$3.75/hr',40:'$5.00/hr',55:'$6.88/hr',65:'$8.13/hr'};
+      LOCALS[82].travelZones.forEach(function(z){
+        if(hr82[z.amount]&&(z.rate||'').indexOf('/hr')<0)z.rate=(z.rate||('$'+z.amount+'/day'))+' ('+hr82[z.amount]+')';
+        if(z.amount===65&&z.maxMi!=null){z.altAmount=140;z.calcNote='Commuting rate — full subsistence ($140/day) instead if staying overnight with lodging receipts';}
+        if(z.maxMi==null)z.calcNote=((z.calcNote||'')?z.calcNote+' · ':'')+'No subsistence if the job completes in one day';
+      });
+    }
+  }
+
   // Local 28 — the stored 4th "Board & Room Zone" row isn't a CBA band: Art.
   // VI has three bands only and Zone 2's $10/hr IS the board-and-room money
   // (employer may substitute real lodging & board, Zone 2 only). Fold the
@@ -1010,12 +1049,13 @@ function sr(local,cn,lid){
         +'<th style="text-align:right;color:#3a4a60;font-weight:400;padding:2px 0 4px 4px;border-bottom:1px solid #1a2540">Co. Vehicle</th>'
         +'</tr>';
       local.travelZones.forEach(function(z){
+        var cvNoteCell=z.note?'<tr><td colspan="4" style="padding:0 0 3px 0;font-size:9px;color:#3a4a60">'+z.note+'</td></tr>':'';
         zonesHtml+='<tr>'
           +'<td style="padding:3px 4px 3px 0;color:#8a9ab8;font-family:Space Mono,monospace;white-space:nowrap">'+z.label+'</td>'
           +'<td style="padding:3px 4px;color:#4a5a78">'+z.miles+'</td>'
           +'<td style="padding:3px 0 3px 4px;text-align:right;color:#8a9ab8;font-family:Space Mono,monospace;white-space:nowrap">'+z.rate+'</td>'
           +'<td style="padding:3px 0 3px 4px;text-align:right;color:#4a5a78;white-space:nowrap">'+z.cvRate+'</td>'
-          +'</tr>';
+          +'</tr>'+cvNoteCell;
       });
       zonesHtml+='</table>';
     } else {
@@ -1418,9 +1458,31 @@ var RATE_LID=null;
 function haversine(a,b,c,d){var R=3958.8,r=Math.PI/180,dl=(c-a)*r,dn=(d-b)*r,x=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dn/2)*Math.sin(dn/2);return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function nearest(la,lo,pts){var bp=pts[0],bd=Infinity;pts.forEach(function(p){var d=haversine(la,lo,p.lat,p.lng);if(d<bd){bd=d;bp=p;}});return{p:bp,d:Math.round(bd)};}
 
+// Local 82: zones measure from the city hall nearest the worker's declared
+// residence (the dispatch pin stands in for it). Coeur d'Alene is a named
+// free zone for SPOKANE residents (Art. 12). Zone 6 carries an overnight
+// alternative; subsistence work adds start/end-of-job mileage capped at
+// $400 each way (Art. 13 §5).
+var L82_CDA={lat:47.6777,lng:-116.7805,r:5};
 function c82(m){
+  if(CUR_LAT!=null&&PRIMARY_DISPATCH&&/spokane/i.test(PRIMARY_DISPATCH.name||'')&&haversine(CUR_LAT,CUR_LNG,L82_CDA.lat,L82_CDA.lng)<=L82_CDA.r)
+    return{z:'Free Zone — Coeur d’Alene',c:0,n:'Coeur d’Alene is a free zone for Spokane residents (Art. 12)'};
   var zones=LOCALS[82].travelZones;
-  for(var i=0;i<zones.length;i++){var z=zones[i];if(z.maxMi===null||m<=z.maxMi){var r={z:z.calcLabel,c:z.amount};if(z.calcNote)r.n=z.calcNote;return r;}}
+  for(var i=0;i<zones.length;i++){
+    var z=zones[i];
+    if(z.maxMi===null||m<=z.maxMi){
+      var r={z:z.calcLabel,c:z.amount};
+      if(z.calcNote)r.n=z.calcNote;
+      if(z.altAmount!=null)r.alt=z.altAmount;
+      if(z.maxMi===null){
+        var ow=Math.min(IRS_MILEAGE_RATE*m,400);
+        r.mi=+(ow*2).toFixed(2);
+        r.miLabel='travel in/out';
+        r.miNote=fmtCentsPerMi(IRS_MILEAGE_RATE)+' × '+m+' mi × 2 · capped $400 each way · start & end of job';
+      }
+      return r;
+    }
+  }
 }
 function c7(m){
   var mc=LOCALS[7].mileageCalc;
@@ -2570,6 +2632,12 @@ window.flyTo=flyTo;window.toggleHelp=toggleHelp;window.clearResult=clearResult;w
   if(LOCALS[16]){
     L.polyline(SR49_LINE,{color:'#0f172a',weight:2,opacity:.65,dashArray:'6 5'})
       .bindTooltip('Hwy 49 — Local 16 travel-rate divider (El Dorado & Placer: $15 west / $35–$40 east)',{sticky:true})
+      .addTo(map);
+  }
+  if(LOCALS[82]){
+    L.circleMarker([L82_CDA.lat,L82_CDA.lng],{radius:5,color:'#fff',weight:1.5,fillColor:LOCALS[82].color||'#4a90d9',fillOpacity:.95})
+      .bindTooltip('Coeur d’Alene — free zone for Spokane residents (Local 82)',{direction:'top'})
+      .on('click',function(ev){L.DomEvent.stopPropagation(ev);flyToCoord(L82_CDA.lat,L82_CDA.lng);})
       .addTo(map);
   }
 })();

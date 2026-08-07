@@ -178,6 +178,47 @@ async function clearSel() {
   check('L135: four-city waiver note present', /physical cities/i.test(r.card));
   await clearSel();
 
+  // ── Local 36: Zone 5 company-vehicle correction (2026-2029 CBA) ───────────
+  await clickLatLng(43.6, -117.6, 7); // Malheur County OR (Zone 5 from Hermiston)
+  r = await readCard();
+  check('L36 Malheur: county resolved', /Malheur County/.test(r.county), r.county);
+  check('L36 Malheur: Zone 5 $160 + $90 drive-only alt', /\$160\.00/.test(r.calc) && /\$90\.00/.test(r.calc), r.calc.slice(0, 160));
+  const cv36 = await page.evaluate(() => {
+    const el = document.getElementById('calc-cv');
+    if (!el) return { present: false };
+    el.value = '1'; window.updateCost();
+    return { present: true, calc: (document.getElementById('calc-out') || {}).textContent || '' };
+  });
+  check('L36: company-vehicle Zone 5 = $160 stay / $85 driven', cv36.present && /\$160\.00/.test(cv36.calc) && /\$85\.00/.test(cv36.calc), (cv36.calc || '').slice(0, 200));
+  check('L36: no stale $135/$75 CV figures', cv36.present && !/\$135\.00|\$75\.00/.test(cv36.calc));
+  check('L36: coastal-resort note in zone table', /Coastal resort towns/.test(r.card));
+  check('L36: drag-pin residence guidance', /drag the dispatch pin/i.test(r.card));
+  await clearSel();
+
+  // ── Local 82: Coeur d'Alene free zone for Spokane residents ───────────────
+  await clickLatLng(47.6777, -116.7805, 10);
+  r = await readCard();
+  check('L82 CdA: county resolved', /Kootenai County/.test(r.county), r.county);
+  check('L82 CdA: free zone for Spokane residents', /Coeur d’Alene/.test(r.calc) && /\$0/.test(r.calc), r.calc.slice(0, 160));
+  await clearSel();
+
+  // ── Local 82: Zone 6 conditional + capped travel mileage ──────────────────
+  await clickLatLng(48.5, -118.7, 8); // Ferry County WA
+  r = await readCard();
+  check('L82 Ferry: county resolved', /Ferry County/.test(r.county), r.county);
+  const z6 = await page.evaluate(() => {
+    const mi = document.getElementById('calc-mi');
+    mi.value = '65'; window.updateCost();
+    const at65 = (document.getElementById('calc-out') || {}).textContent || '';
+    mi.value = '700'; window.updateCost();
+    const at700 = (document.getElementById('calc-out') || {}).textContent || '';
+    return { at65, at700 };
+  });
+  check('L82 Zone 6 @65mi: $65 with $140 overnight alt', /\$65\.00/.test(z6.at65) && /\$140\.00/.test(z6.at65), z6.at65.slice(0, 200));
+  check('L82 subsistence @700mi: travel in/out capped at $400/way', /\$800\.00/.test(z6.at700) && /capped \$400/.test(z6.at700), z6.at700.slice(0, 220));
+  check('L82: hourly equivalent shown in zone table', /\$8\.13\/hr/.test(r.card));
+  await clearSel();
+
   await page.screenshot({ path: 'subareas_verify.png' });
   const failed = results.filter(x => !x.ok);
   console.log('\n' + (results.length - failed.length) + '/' + results.length + ' checks passed');
