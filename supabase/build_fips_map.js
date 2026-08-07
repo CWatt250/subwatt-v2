@@ -54,18 +54,22 @@ function assign(localId, fipsArr) {
 const ORIG = JSON.parse(fs.readFileSync('data.json','utf8')).fipsToLocal;
 Object.entries(ORIG).forEach(([f,lid]) => { map[f] = Number(lid); });
 
-// Local 28 — Colorado statewide + SE Wyoming (Albany, Carbon, Goshen, Laramie, Niobrara, Platte)
+// Local 28 — Colorado statewide + 15 Wyoming counties (CBA Art. I §2 —
+// includes northern/central WY: Sheridan, Big Horn, Washakie, Johnson,
+// Campbell, Crook, Natrona, Converse, Weston, not just the SE corner)
 assign(28, statewide('08'));
-assign(28, listFips('56', ['Albany','Carbon','Goshen','Laramie','Niobrara','Platte']));
+assign(28, listFips('56', ['Albany','Big Horn','Campbell','Carbon','Converse','Crook','Goshen','Johnson','Laramie','Natrona','Niobrara','Platte','Sheridan','Washakie','Weston']));
 
 // Local 73 — Arizona statewide
 assign(73, statewide('04'));
 
-// Local 69 — Utah statewide + White Pine, Eureka, Elko NV + Sweetwater, Uinta, Lincoln WY + Bear Lake, Franklin, Caribou, Bannock, Bingham, Bonneville ID
+// Local 69 — Utah statewide + White Pine, Eureka, Elko NV + 8 WY counties
+// (CBA Art. 4 §1 adds Sublette, Teton, Fremont, Park, Hot Springs and
+// Yellowstone NP) + 34 southern-Idaho counties (full CBA list)
 assign(69, statewide('49'));
 assign(69, listFips('32', ['White Pine','Eureka','Elko']));
-assign(69, listFips('56', ['Sweetwater','Uinta','Lincoln']));
-assign(69, listFips('16', ['Bear Lake','Franklin','Caribou','Bannock','Bingham','Bonneville','Power','Oneida','Cassia']));
+assign(69, listFips('56', ['Sweetwater','Uinta','Lincoln','Sublette','Teton','Fremont','Park','Hot Springs']));
+assign(69, listFips('16', ['Washington','Gem','Payette','Canyon','Ada','Boise','Elmore','Owyhee','Custer','Camas','Blaine','Butte','Clark','Jefferson','Twin Falls','Cassia','Power','Bannock','Caribou','Oneida','Franklin','Bear Lake','Adams','Valley','Lemhi','Gooding','Lincoln','Jerome','Minidoka','Bingham','Fremont','Madison','Teton','Bonneville']));
 
 // Local 16 — Northern California + Northern Nevada (Washoe)
 assign(16, listFips('06', [
@@ -73,6 +77,7 @@ assign(16, listFips('06', [
   'Sacramento','Yolo','Sutter','Placer','El Dorado','Nevada','Sierra','Plumas','Lassen','Modoc','Siskiyou','Shasta','Tehama','Glenn','Butte','Colusa','Yuba',
   'Mendocino','Lake','Humboldt','Del Norte','Trinity',
   'San Joaquin','Stanislaus','Merced','Madera','Mariposa','Tuolumne','Calaveras','Amador','Alpine',
+  'Fresno','Kings','Mono','Tulare',
   'Monterey','San Benito','Santa Cruz']));
 assign(16, listFips('32', ['Washoe','Carson City','Storey','Douglas','Lyon','Mineral','Pershing','Humboldt','Lander','Churchill']));
 

@@ -1,7 +1,7 @@
 // Verify the Local 7 Central WA sub-territory rendering + pay routing.
 // App globals live inside bootApp's closure, so everything here goes through
 // the DOM exactly like a real user: read SVG fills, mouse-click a county.
-//   1. Map: exactly 5 county paths fill with url(#l7central) stripes; the
+//   1. Map: exactly 5 county paths fill with url(#subpat-7) stripes; the
 //      west-side Local 7 counties keep the solid green fill.
 //   2. Clicking a striped county -> result card shows the "Local 7 — Central
 //      WA" banner, the renamed zone table, and no "Appendix" text anywhere.
@@ -30,10 +30,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   // ── 1. Map fill audit ─────────────────────────────────────────────────────
   const fills = await page.evaluate(() => {
     const paths = Array.from(document.querySelectorAll('#map svg path'));
-    const striped = paths.filter(p => (p.getAttribute('fill') || '').includes('l7central'));
+    const striped = paths.filter(p => (p.getAttribute('fill') || '').includes('url(#subpat-7)'));
     const green = paths.filter(p => (p.getAttribute('fill') || '').toLowerCase() === '#3dd68c');
     return {
-      patternInDom: !!document.querySelector('pattern#l7central'),
+      patternInDom: !!document.querySelector('pattern#subpat-7'),
       stripedCount: striped.length,
       solidGreenCount: green.length,
     };
@@ -46,7 +46,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const clicked = await (async () => {
     const boxes = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('#map svg path'))
-        .filter(p => (p.getAttribute('fill') || '').includes('l7central'))
+        .filter(p => (p.getAttribute('fill') || '').includes('url(#subpat-7)'))
         .map(p => { const r = p.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
     });
     for (const b of boxes) {
