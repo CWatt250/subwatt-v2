@@ -403,6 +403,26 @@ var MAPBOX_TOKEN='pk.eyJ1IjoiY3dhdHQtMjUwIiwiYSI6ImNtcDcwMW9jajAxbHoyd3B4c2J6aTh
 var ROUTE_CACHE={};
 var SESSION_TOKEN=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():(String(Date.now())+Math.random());
 var LOCALS=data.locals;
+// ── Runtime data patches ────────────────────────────────────────────────────
+// Values the CBAs peg to a date or to the IRS rate. rate_config in Supabase
+// stores a snapshot; these keep computed numbers current without a database
+// write (the admin UI can only edit zone amounts/labels, not add fields).
+// IRS standard business mileage rate, effective 7/1/2026. A zone can override
+// via a mileageRate field in rate_config; this constant is the fallback.
+var IRS_MILEAGE_RATE=0.76;
+(function(){
+  // Local 7: CBA pegs the mileage zone to the IRS rate; the stored 0.67 is
+  // the 2024 figure. Patching here also fixes the calc-note display.
+  if(LOCALS[7]&&LOCALS[7].mileageCalc)LOCALS[7].mileageCalc.mileageRate=IRS_MILEAGE_RATE;
+  // Local 69: CBA 2025–2028 escalates subsistence — $140 → $150 on 2/1/2026
+  // → $160 on 2/1/2027. Data holds the 2025 figure; never lower an
+  // admin-corrected amount.
+  if(LOCALS[69]&&Array.isArray(LOCALS[69].travelZones)&&LOCALS[69].travelZones.length){
+    var zs69=LOCALS[69].travelZones,t69=zs69[zs69.length-1],now=new Date();
+    var target=(now>=new Date(2027,1,1))?160:(now>=new Date(2026,1,1))?150:140;
+    if(t69&&t69.maxMi==null&&typeof t69.amount==='number'&&t69.amount<target)t69.amount=target;
+  }
+})();
 var FL=data.fipsToLocal;
 var SA=data.stateAbbr;
 var DISPATCH={};Object.keys(LOCALS).forEach(function(k){DISPATCH[k]=LOCALS[k].dispatches;});
@@ -1204,9 +1224,11 @@ function c36(m,cv){
   for(var i=0;i<zones.length;i++){var z=zones[i];if(z.maxMi===null||m<=z.maxMi){var r={z:z.calcLabel,c:cv?z.cvAmount:z.amount};var n=cv?(z.cvCalcNote||''):(z.calcNote||'');if(n)r.n=n;if(z.altAmount!==undefined)r.alt=cv?z.cvAltAmount:z.altAmount;return r;}}
 }
 
-// IRS standard business mileage rate, effective 7/1/2026. A zone can override
-// via a mileageRate field in rate_config; this constant is the fallback.
-var IRS_MILEAGE_RATE=0.76;
+// IRS_MILEAGE_RATE is defined with the runtime data patches near the top of
+// bootApp so the patch block can use it.
+function fmtCentsPerMi(rate){return(+(rate*100).toFixed(1))+'¢/mi';}
+// CUR_FIPS may arrive unpadded from GeoJSON ids; county tables use 5-digit keys.
+function fips5(){return String(CUR_FIPS||'').padStart(5,'0');}
 function c73(m){
   var L=LOCALS[73];
   if(!L||!Array.isArray(L.travelZones)||!L.travelZones.length)return null;
@@ -1221,11 +1243,105 @@ function c73(m){
       if(z.maxMi===null){
         var rate=(z.mileageRate!=null?z.mileageRate:IRS_MILEAGE_RATE);
         r.mi=+(rate*m).toFixed(2);
-        r.miNote=(+(rate*100).toFixed(1))+'¢/mi × '+m+' mi · one way, once per project';
+        r.miNote=fmtCentsPerMi(rate)+' × '+m+' mi · one way, once per project';
       }
       return r;
     }
   }
+}
+
+// Local 76 (New Mexico): Zone 2 is Los Alamos COUNTY (CBA Section 2), not a
+// mileage band — matched by FIPS, never by distance. Zone 3 = beyond 66 mi
+// from Albuquerque/El Paso City Hall: $85/day minimum + IRS mileage, paid
+// once, one way, per project.
+function c76(m){
+  var L=LOCALS[76];
+  if(!L||!Array.isArray(L.travelZones)||!L.travelZones.length)return null;
+  var la=null,free=null,term=null;
+  L.travelZones.forEach(function(z){
+    if(/los alamos/i.test(z.label||''))la=z;
+    else if(z.maxMi!=null)free=z;
+    else term=z;
+  });
+  if(la&&fips5()==='35028')
+    return{z:la.calcLabel||la.label,c:(la.amount!=null?la.amount:0),n:la.calcNote||'Los Alamos County — county-based zone, $40/day if not furnished a company vehicle'};
+  if(free&&m<=free.maxMi)
+    return{z:free.calcLabel||free.label,c:(free.amount!=null?free.amount:0),n:free.calcNote||'No travel pay'};
+  if(term){
+    var rate=(term.mileageRate!=null?term.mileageRate:IRS_MILEAGE_RATE);
+    var r={z:term.calcLabel||term.label,c:(term.amount!=null?term.amount:0)};
+    if(term.calcNote)r.n=term.calcNote;
+    r.mi=+(rate*m).toFixed(2);
+    r.miNote=fmtCentsPerMi(rate)+' × '+m+' mi · one way, once per project';
+    return r;
+  }
+  return null;
+}
+
+// Local 28 (Denver): Board & Room is an alternative arrangement on jobs beyond
+// 80 mi (lodging/board provided or substituted + daily IRS mileage from the
+// nearest liveable town) — not a mileage band, so it rides along as a note on
+// the Zone 2 result rather than a computed amount.
+function c28(m){
+  var r=cGeneric(28,m);
+  if(!r)return r;
+  var zs=(LOCALS[28]&&LOCALS[28].travelZones)||[],band=null,board=null;
+  zs.forEach(function(z){if(/board/i.test(z.label||''))board=z;else if(z.maxMi!=null)band=z;});
+  if(board&&band&&m>band.maxMi)
+    r.n=(r.n?r.n+' · ':'')+'Alt: '+(board.rate||'Board & Room')+' — '+(board.calcNote||'lodging/board provided or substituted');
+  return r;
+}
+
+// Local 135 (Las Vegas): CBA Travel Expense — dispatch to any paid zone also
+// earns IRS mileage at the start and finish of the job (one round trip per
+// project) plus travel-time wages; the separate DAILY per-mile allowance to
+// the nearest living accommodations (10-mi exemption each way) depends on
+// lodging location and isn't computed here.
+function c135(m){
+  var r=cGeneric(135,m);
+  if(!r)return r;
+  var zs=(LOCALS[135]&&LOCALS[135].travelZones)||[],free=zs[0];
+  if(free&&free.maxMi!=null&&m>free.maxMi){
+    r.mi=+(IRS_MILEAGE_RATE*m*2).toFixed(2);
+    r.miNote=fmtCentsPerMi(IRS_MILEAGE_RATE)+' × '+m+' mi × 2 (round trip) · once per project, + travel-time wages';
+    r.n=(r.n?r.n+' · ':'')+'Daily IRS mileage to nearest lodging beyond 10 mi each way also applies (not computed)';
+  }
+  return r;
+}
+
+// Local 16 (NorCal / N. Nevada): travel is COUNTY-based in California (CBA
+// Art. IV §46) and a Reno City Hall radius in Nevada (§47) — the generic
+// mileage lookup can't express either. 'S' = subsistence area. Hwy-49 split
+// counties show the west-side rate with the east side in the note.
+var L16_CA={'06001':15,'06003':'S','06005':25,'06007':'S','06009':35,'06011':35,'06013':15,'06015':'S','06019':15,'06021':'S','06023':'S','06031':45,'06033':'S','06035':'S','06039':25,'06041':15,'06043':35,'06045':'S','06047':25,'06049':'S','06051':'S','06053':'S','06055':25,'06057':25,'06063':'S','06067':15,'06069':'S','06075':20,'06077':25,'06081':20,'06085':25,'06087':40,'06089':'S','06091':'S','06093':'S','06095':15,'06097':25,'06099':20,'06101':35,'06103':'S','06105':'S','06107':45,'06109':35,'06113':15,'06115':35};
+var L16_SPLIT={'06017':{w:15,e:35},'06061':{w:15,e:40}};
+var L16_Z1={'06001':1,'06013':1,'06041':1,'06055':1,'06069':1,'06075':1,'06081':1,'06085':1,'06095':1,'06097':1};
+var L16_NV={'32001':1,'32005':1,'32013':1,'32015':1,'32019':1,'32021':1,'32027':1,'32029':1,'32031':1,'32510':1};
+function l16Subsist(){
+  var zs=(LOCALS[16]&&LOCALS[16].travelZones)||[],t=zs[zs.length-1];
+  return{z:(t&&(t.calcLabel||t.label))||'Subsistence Area',
+    c:(t&&t.amount!=null?t.amount:100),
+    n:(t&&t.calcNote)||'$100/day no receipts, up to $140/day with receipts',
+    mi:120,miLabel:'travel in/out',miNote:'$60 in + $60 out · once per project'};
+}
+function c16(m){
+  var fp=fips5();
+  if(L16_NV[fp]){
+    var zs=(LOCALS[16]&&LOCALS[16].travelZones)||[];
+    for(var i=0;i<zs.length;i++){
+      var z=zs[i];
+      if(/reno/i.test(z.label||'')&&z.maxMi!=null&&m<=z.maxMi)
+        return{z:z.calcLabel||z.label,c:(z.amount!=null?z.amount:0),n:'Radius from Reno City Hall'};
+    }
+    return l16Subsist();
+  }
+  var split=L16_SPLIT[fp];
+  if(split)return{z:'Zone 2 (NorCal interior)',c:split.w,n:'West of Hwy 49 · $'+split.e+'/day east of Hwy 49 — verify which side the job is on'};
+  var v=L16_CA[fp];
+  if(v==='S')return l16Subsist();
+  if(v!=null)return{z:L16_Z1[fp]?'Zone 1 (Bay Area)':'Zone 2 (NorCal interior)',c:v,n:'County-based daily rate — mileage from dispatch does not apply'};
+  // Unknown/no county selected: fall back to the old generic behavior.
+  return cGeneric(16,m);
 }
 
 // Generic per-zone lookup for any local with a travelZones array.
@@ -1265,7 +1381,11 @@ function updateCost(){
   else if(elid==82)res=c82(m);
   else if(elid==7)res=(L7A&&L7A[CUR_FIPS])?c7a(m):c7(m);
   else if(elid==36)res=c36(m,cv);
+  else if(elid==16)res=c16(m);
+  else if(elid==28)res=c28(m);
   else if(elid==73)res=c73(m);
+  else if(elid==76)res=c76(m);
+  else if(elid==135)res=c135(m);
   else if(elid!=null)res=cGeneric(elid,m);
   if(!res){out.innerHTML='';return;}
   // Hanford HSSA rendering — purple theme, different styling from standard amber
@@ -1290,7 +1410,7 @@ function updateCost(){
     h+='<div style="font-family:Space Mono,monospace;font-size:26px;color:#d97706;font-weight:700">$'+res.c.toFixed(2)+'<span style="font-size:10px;color:#92400e;margin-left:8px">/ worker / day</span></div>';
     if(res.n)h+='<div style="font-size:10px;color:#b45309;margin-top:3px">'+res.n+'</div>';
     if(res.alt!==undefined)h+='<div style="font-size:10px;color:#7c3aed;margin-top:3px;padding-top:3px;border-top:1px solid #fde68a">Alt: <span style="font-family:Space Mono,monospace;color:#7c3aed">$'+res.alt.toFixed(2)+'/day</span></div>';
-    if(res.mi!==undefined)h+='<div id="calc-mileage-line" style="font-size:10px;color:#1e5fa8;margin-top:3px;padding-top:3px;border-top:1px solid #fde68a">+ <span style="font-family:Space Mono,monospace;font-size:14px;font-weight:700;color:#1e5fa8">$'+res.mi.toFixed(2)+'</span> mileage <span style="color:#64748b">· '+(res.miNote||'')+'</span></div>';
+    if(res.mi!==undefined)h+='<div id="calc-mileage-line" data-label="'+(res.miLabel||'mileage')+'" style="font-size:10px;color:#1e5fa8;margin-top:3px;padding-top:3px;border-top:1px solid #fde68a">+ <span style="font-family:Space Mono,monospace;font-size:14px;font-weight:700;color:#1e5fa8">$'+res.mi.toFixed(2)+'</span> '+(res.miLabel||'mileage')+' <span style="color:#64748b">· '+(res.miNote||'')+'</span></div>';
   }
   h+='</div>';
   out.innerHTML=h;
@@ -1487,10 +1607,15 @@ function getZoneRings(lid,isA){
   }
   if(Array.isArray(L.travelZones)&&L.travelZones.length){
     var meta=ZONE_RING_META[String(lid)]||{};
-    return buildRingsFromZones(L.travelZones,meta);
+    // County-defined zones (Los Alamos, Board & Room, Local 16's CA county
+    // tiers) aren't radii — skip them when drawing rings.
+    var skip=RING_ZONE_SKIP[String(lid)];
+    var ringZones=skip?L.travelZones.filter(function(z){return !skip.test(z.label||'');}):L.travelZones;
+    return buildRingsFromZones(ringZones,meta);
   }
   return[];
 }
+var RING_ZONE_SKIP={'76':/los alamos/i,'28':/board/i,'16':/bay area|norcal/i};
 
 function clearDispatchZones(){
   Object.keys(dispatchLGs).forEach(function(k){map.removeLayer(dispatchLGs[k]);});
@@ -2045,7 +2170,7 @@ function exportPdf(){
       var mlEl=outEl?outEl.querySelector('#calc-mileage-line'):null;
       if(mlEl){
         var mlAmt=mlEl.querySelector('span');
-        rows.push(['One-time mileage',(mlAmt?mlAmt.textContent.trim():'\u2014'),mlEl.textContent.replace(/^\+\s*/,'').trim()]);
+        rows.push(['One-time '+(mlEl.getAttribute('data-label')||'mileage'),(mlAmt?mlAmt.textContent.trim():'\u2014'),mlEl.textContent.replace(/^\+\s*/,'').trim()]);
       }
 
       var topY=margin+0.65+shift;
