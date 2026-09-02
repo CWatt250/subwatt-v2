@@ -99,6 +99,16 @@ a{color:#2563eb}
 .stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px}
 .stat-num{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:#0f172a}
 .stat-label{font-size:10px;color:#64748b;margin-top:3px;letter-spacing:.3px}
+.an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.an-box{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;min-width:0}
+.an-title{font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:#64748b;margin-bottom:8px}
+.an-box .audit-table td{padding:5px 4px;position:relative}
+.an-bar{height:3px;background:#2563eb;opacity:.35;border-radius:2px;margin-top:3px;max-width:100%}
+.an-days{display:flex;gap:6px;align-items:flex-end;height:96px}
+.an-day{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0}
+.an-day-bar{width:100%;max-width:28px;background:#2563eb;border-radius:3px 3px 0 0}
+.an-day-n{font-family:'Space Mono',monospace;font-size:9px;color:#0f172a;margin-top:3px}
+.an-day-l{font-size:8px;color:#94a3b8;white-space:nowrap}
 
 /* ── Toast ──────────────────────────── */
 #toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;font-size:12px;font-family:'Space Mono',monospace;padding:10px 16px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;z-index:9999}
@@ -598,53 +608,90 @@ async function saveIrex(){
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
+// Reads analytics_events (visits + feature events logged by the public app).
+// Aggregation is done client-side over the last 30 days (capped at 5000 rows).
+var AN_RANGE_DAYS=30;
+function anTop(rows,keyFn,n,uniqBySession){
+  var m={},seen={};
+  rows.forEach(function(r){var k=keyFn(r);if(!k)return;if(uniqBySession){var sk=k+'|'+r.session_id;if(seen[sk])return;seen[sk]=1;}m[k]=(m[k]||0)+1;});
+  return Object.entries(m).sort(function(a,b){return b[1]-a[1];}).slice(0,n);
+}
+function anTable(title,pairs,col2,emptyMsg){
+  var h='<div class="an-box"><div class="an-title">'+esc(title)+'</div>';
+  if(!pairs.length)return h+'<div class="empty-state" style="padding:10px 0">'+esc(emptyMsg||'Nothing yet')+'</div></div>';
+  var max=pairs[0][1]||1;
+  h+='<table class="audit-table">';
+  pairs.forEach(function(p){h+='<tr><td>'+esc(p[0])+'<div class="an-bar" style="width:'+Math.round(100*p[1]/max)+'%"></div></td><td class="mono" style="text-align:right;white-space:nowrap">'+p[1]+'</td></tr>';});
+  return h+'</table></div>';
+}
+function anAgo(iso){var m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return 'just now';if(m<60)return m+'m ago';var h=Math.round(m/60);if(h<24)return h+'h ago';return Math.round(h/24)+'d ago';}
+function anPlace(r){return [r.city,r.region].filter(Boolean).join(', ')||(r.country||'Unknown');}
 async function loadAnalytics(){
   var container=document.getElementById('analytics-container');
   container.innerHTML='<div class="empty-state"><span class="spinner"></span>Loading…</div>';
+  var since=new Date(Date.now()-AN_RANGE_DAYS*864e5).toISOString();
+  var res=await supa.from('analytics_events').select('id,created_at,session_id,kind,label,local_id,country,region,city,device,browser,os,referrer,is_pwa')
+    .gte('created_at',since).neq('session_id','selftest').order('created_at',{ascending:false}).limit(5000);
+  if(res.error){container.innerHTML='<div class="empty-state">Could not load analytics: '+esc(res.error.message)+'</div>';return;}
+  var rows=res.data||[];
+  var now=Date.now(),dayMs=864e5;
+  var visits=rows.filter(function(r){return r.kind==='visit';});
+  function uniqSessions(list){var m={};list.forEach(function(r){m[r.session_id]=1;});return Object.keys(m).length;}
+  var todayStart=new Date();todayStart.setHours(0,0,0,0);
+  var vToday=uniqSessions(visits.filter(function(r){return new Date(r.created_at)>=todayStart;}));
+  var v7=uniqSessions(visits.filter(function(r){return now-new Date(r.created_at)<7*dayMs;}));
+  var v30=uniqSessions(visits);
+  var active=uniqSessions(rows.filter(function(r){return now-new Date(r.created_at)<30*60000;}));
+  var pwa=uniqSessions(visits.filter(function(r){return r.is_pwa;}));
+  var cnt=function(k){return rows.filter(function(r){return r.kind===k;}).length;};
+  var sessionsWithClick=uniqSessions(rows.filter(function(r){return r.kind==='county_click'||r.kind==='search';}));
 
-  // Total searches
-  var totResult=await supa.from('search_log').select('*',{count:'exact',head:true});
-  var total=totResult.count||0;
+  var h='<div class="stat-grid">'
+    +'<div class="stat-card"><div class="stat-num">'+active+'</div><div class="stat-label">Active now (30 min)</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+vToday+'</div><div class="stat-label">Visitors today</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+v7+'</div><div class="stat-label">Visitors · 7 days</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+v30+'</div><div class="stat-label">Visitors · 30 days</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+cnt('county_click')+'</div><div class="stat-label">County clicks · 30d</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+cnt('search')+'</div><div class="stat-label">Address searches · 30d</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+cnt('pdf_export')+'</div><div class="stat-label">PDF exports · 30d</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+(v30?Math.round(100*sessionsWithClick/v30):0)+'%</div><div class="stat-label">Visitors who looked something up</div></div>'
+    +'<div class="stat-card"><div class="stat-num">'+pwa+'</div><div class="stat-label">Installed-app visitors · 30d</div></div>'
+    +'</div>';
 
-  // Searches by local
-  var byLocalResult=await supa.from('search_log').select('local_id').limit(1000);
-  var byLocal={};
-  if(byLocalResult.data){
-    byLocalResult.data.forEach(function(row){
-      var k=row.local_id?'Local '+row.local_id:'Unknown';
-      byLocal[k]=(byLocal[k]||0)+1;
+  // Daily visitors, last 14 days
+  var days=[];for(var i=13;i>=0;i--){var d=new Date(todayStart.getTime()-i*dayMs);days.push({d:d,key:d.toISOString().slice(0,10),n:0,s:{}});}
+  visits.forEach(function(r){var k=new Date(r.created_at);k.setHours(0,0,0,0);var key=k.toISOString().slice(0,10);var day=days.find(function(x){return x.key===key;});if(day&&!day.s[r.session_id]){day.s[r.session_id]=1;day.n++;}});
+  var maxD=Math.max.apply(null,days.map(function(x){return x.n;}).concat([1]));
+  h+='<div class="an-box" style="margin-bottom:14px"><div class="an-title">Daily visitors · last 14 days</div><div class="an-days">';
+  days.forEach(function(x){var lab=(x.d.getMonth()+1)+'/'+x.d.getDate();h+='<div class="an-day" title="'+lab+': '+x.n+'"><div class="an-day-bar" style="height:'+Math.max(2,Math.round(60*x.n/maxD))+'px"></div><div class="an-day-n">'+x.n+'</div><div class="an-day-l">'+lab+'</div></div>';});
+  h+='</div></div>';
+
+  h+='<div class="an-grid">'
+    +anTable('Where visitors are (city)',anTop(visits,anPlace,10,true),'visitors','No location data yet')
+    +anTable('By state',anTop(visits,function(r){return r.region||r.country;},10,true))
+    +anTable('Referrers',anTop(visits,function(r){return r.referrer||'Direct / typed / bookmark';},8,true))
+    +anTable('Devices',anTop(visits,function(r){return (r.device||'?')+' · '+(r.os||'?');},8,true))
+    +anTable('Browsers',anTop(visits,function(r){return r.browser;},6,true))
+    +anTable('Counties looked up',anTop(rows.filter(function(r){return r.kind==='county_click';}),function(r){return r.label;},10))
+    +anTable('Locals looked up',anTop(rows.filter(function(r){return r.kind==='county_click'||r.kind==='search';}),function(r){return r.local_id?'Local '+r.local_id:'';},10))
+    +anTable('Map style picks',anTop(rows.filter(function(r){return r.kind==='basemap';}),function(r){return r.label==='sat'?'Satellite':'Map';},2))
+    +'</div>';
+
+  // Recent activity feed
+  var recent=rows.slice(0,25);
+  h+='<div class="an-box" style="margin-top:14px"><div class="an-title">Recent activity</div>';
+  if(!recent.length)h+='<div class="empty-state" style="padding:10px 0">No activity in the last '+AN_RANGE_DAYS+' days.</div>';
+  else{
+    h+='<table class="audit-table"><thead><tr><th>When</th><th>What</th><th>Detail</th><th>From</th><th>Device</th></tr></thead><tbody>';
+    var KIND={visit:'Visit',county_click:'County click',search:'Search',pdf_export:'PDF export',basemap:'Map style',irex:'Irex toggle'};
+    recent.forEach(function(r){
+      var det=r.label||'';if(r.kind==='visit')det='';if(r.local_id&&r.kind!=='visit')det+=(det?' · ':'')+'Local '+r.local_id;
+      h+='<tr><td class="mono" style="white-space:nowrap" title="'+esc(new Date(r.created_at).toLocaleString())+'">'+anAgo(r.created_at)+'</td><td>'+esc(KIND[r.kind]||r.kind)+'</td><td>'+esc(det)+'</td><td>'+esc(anPlace(r))+'</td><td style="color:#64748b">'+esc((r.device||'')+' · '+(r.browser||''))+'</td></tr>';
     });
+    h+='</tbody></table>';
   }
-
-  // Most searched counties (top 5)
-  var byCountyResult=await supa.from('search_log').select('county').limit(1000);
-  var byCounty={};
-  if(byCountyResult.data){
-    byCountyResult.data.forEach(function(row){
-      if(row.county){byCounty[row.county]=(byCounty[row.county]||0)+1;}
-    });
-  }
-  var topCounties=Object.entries(byCounty).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-
-  var statsHtml='<div class="stat-grid">'
-    +'<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-label">Total searches</div></div>';
-  Object.entries(byLocal).sort(function(a,b){return b[1]-a[1];}).forEach(function(entry){
-    statsHtml+='<div class="stat-card"><div class="stat-num">'+entry[1]+'</div><div class="stat-label">'+esc(entry[0])+'</div></div>';
-  });
-  statsHtml+='</div>';
-
-  if(topCounties.length){
-    statsHtml+='<div class="section-hd" style="margin-top:16px"><h2 style="font-size:10px">Top Counties</h2></div>';
-    statsHtml+='<table class="audit-table"><thead><tr><th>County</th><th>Searches</th></tr></thead><tbody>';
-    topCounties.forEach(function(entry){
-      statsHtml+='<tr><td>'+esc(entry[0])+'</td><td class="mono">'+entry[1]+'</td></tr>';
-    });
-    statsHtml+='</tbody></table>';
-  } else {
-    statsHtml+='<div class="empty-state" style="padding-top:8px">No search data yet.</div>';
-  }
-
-  container.innerHTML=statsHtml;
+  h+='</div><div style="font-size:10px;color:#94a3b8;margin-top:8px">Counts are unique browser sessions over the last '+AN_RANGE_DAYS+' days. Location is city-level from IP lookup; no IP addresses are stored. Visits from localhost and automated tests are excluded.</div>';
+  container.innerHTML=h;
 }
 </script>
 </body>

@@ -365,6 +365,52 @@ var SUPA_URL='https://qhrpmpbjeyhgryssnjhg.supabase.co';
 var SUPA_KEY='sb_publishable_y9X5a2ueaYYa3Yyc3UyOFQ_vAiNn8DU';
 var supa=window.supabase.createClient(SUPA_URL,SUPA_KEY);
 
+// ── Usage analytics (privacy-light) ──────────────────────────────────────────
+// One 'visit' row per browser session plus one row per feature event, written
+// to analytics_events (anon can only INSERT; the admin page reads them).
+// City/state come from a client-side ipapi.co lookup cached for 24h in
+// localStorage — the IP itself is never stored. Off for bots/puppeteer and
+// localhost unless localStorage.subwatt_track === 'force'.
+var SW_TRACK_OFF=(function(){try{if(localStorage.getItem('subwatt_track')==='force')return false;}catch(e){}return !!navigator.webdriver||/^(localhost|127\.)/.test(location.hostname);})();
+var SW_SESSION=(function(){try{var s=sessionStorage.getItem('subwatt_sid');if(!s){s=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('subwatt_sid',s);}return s;}catch(e){return 'anon-'+Date.now().toString(36);}})();
+var SW_CTX_P=null;
+function swDevice(){
+  var ua=navigator.userAgent;
+  var d=/iPad|Tablet|PlayBook|Silk|Android(?!.*Mobile)/i.test(ua)?'tablet':/Mobi|Android|iPhone|iPod/i.test(ua)?'mobile':'desktop';
+  if(d==='desktop'&&navigator.maxTouchPoints>1&&/Mac/.test(ua))d='tablet'; // iPadOS reports as Mac
+  var b='other';if(/Edg\//.test(ua))b='Edge';else if(/OPR\//.test(ua))b='Opera';else if(/SamsungBrowser/.test(ua))b='Samsung';else if(/Chrome\//.test(ua))b='Chrome';else if(/Firefox\//.test(ua))b='Firefox';else if(/Safari\//.test(ua))b='Safari';
+  var o='other';if(/Windows/.test(ua))o='Windows';else if(/iPhone|iPad|iPod/.test(ua))o='iOS';else if(/Android/.test(ua))o='Android';else if(/Mac OS/.test(ua))o=(d==='tablet')?'iPadOS':'macOS';else if(/CrOS/.test(ua))o='ChromeOS';else if(/Linux/.test(ua))o='Linux';
+  return{device:d,browser:b,os:o};
+}
+function swContext(){
+  if(SW_CTX_P)return SW_CTX_P;
+  var dv=swDevice(),ref='';try{ref=document.referrer?new URL(document.referrer).hostname:'';}catch(e){}
+  if(ref===location.hostname)ref='';
+  var base={device:dv.device,browser:dv.browser,os:dv.os,screen:screen.width+'x'+screen.height,referrer:ref,path:location.pathname,user_agent:navigator.userAgent.slice(0,200),
+    is_pwa:!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true,country:'',region:'',city:'',lat:null,lng:null};
+  var geo=null;try{var g=JSON.parse(localStorage.getItem('subwatt_geo')||'null');if(g&&g.t&&Date.now()-g.t<864e5)geo=g;}catch(e){}
+  if(geo){SW_CTX_P=Promise.resolve(Object.assign(base,{country:geo.country,region:geo.region,city:geo.city,lat:geo.lat,lng:geo.lng}));return SW_CTX_P;}
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;if(ctrl)setTimeout(function(){ctrl.abort();},4000);
+  SW_CTX_P=fetch('https://ipapi.co/json/',ctrl?{signal:ctrl.signal}:{}).then(function(r){return r.ok?r.json():null;}).then(function(j){
+    if(j&&!j.error){var g={country:j.country_name||'',region:j.region||'',city:j.city||'',lat:j.latitude||null,lng:j.longitude||null,t:Date.now()};
+      try{localStorage.setItem('subwatt_geo',JSON.stringify(g));}catch(e){}
+      return Object.assign(base,{country:g.country,region:g.region,city:g.city,lat:g.lat,lng:g.lng});}
+    return base;
+  }).catch(function(){return base;});
+  return SW_CTX_P;
+}
+function swTrack(kind,label,lid){
+  if(SW_TRACK_OFF)return;
+  try{swContext().then(function(ctx){
+    var row=Object.assign({session_id:SW_SESSION,kind:kind,label:String(label||'').slice(0,200),local_id:lid?String(lid):''},ctx);
+    return supa.from('analytics_events').insert(row);
+  }).catch(function(){});}catch(e){}
+}
+// Called after a successful address search + route (see route fetch below).
+function logSearch(lid,county,address){swTrack('search',(address||'')+(county?' → '+county:''),lid);}
+// One 'visit' per browser session.
+(function(){try{if(sessionStorage.getItem('subwatt_visited'))return;sessionStorage.setItem('subwatt_visited','1');}catch(e){}swTrack('visit',document.title);})();
+
 // ── Data loader: Supabase → localStorage cache → bundled data.json ──────────
 async function loadData(){
   try{
@@ -736,6 +782,7 @@ function setBasemap(which,save){
     b.classList.toggle('is-on',on);b.setAttribute('aria-pressed',on?'true':'false');
   });
   if(save!==false){try{localStorage.setItem(BASEMAP_KEY,which);}catch(e){}}
+  if(save!==false)swTrack('basemap',which);
 }
 // Simple two-button Map / Satellite toggle, top-right. Choice sticks across visits.
 var BasemapControl=L.Control.extend({
@@ -786,7 +833,7 @@ function restyleCounties(){
   if(selLayer){selLayer.setStyle(selSty());selLayer.bringToFront();}
   if(hvLayer&&hvLayer!==selLayer){var hl=FL[hvLayer.feature.id.toString()];if(hl)hvLayer.setStyle(hvSty(hl));}
 }
-function ah(f,layer){layer.on({mouseover:function(e){var t=e.target;if(hvLayer&&hvLayer!==t){resetLyr(hvLayer);hvLayer=null;}var hlid=FL[t.feature.id.toString()];if(hlid){t.setStyle(hvSty(hlid));t.bringToFront();if(selLayer&&selLayer!==t)selLayer.bringToFront();}hvLayer=t;},mouseout:function(e){resetLyr(e.target);if(hvLayer===e.target)hvLayer=null;},click:function(e){L.DomEvent.stopPropagation(e);CUR_SEARCH_ADDRESS=null;var ft=e.target.feature,fp=ft.id.toString(),lid=FL[fp],sf=String(ft.id).padStart(5,'0').slice(0,2);var cn=(ft.properties&&ft.properties.name)?ft.properties.name+' County, '+(SA[sf]||''):'FIPS '+fp;CUR_HANFORD=detectHanfordArea(e.latlng.lat,e.latlng.lng);CUR_L73SITE=detectL73Site(e.latlng.lat,e.latlng.lng);var hanfordColor=CUR_HANFORD?HANFORD_AREAS[CUR_HANFORD].color:null;pm(e.latlng.lat,e.latlng.lng,hanfordColor||(lid?LOCALS[lid].color:'#888'));CUR_LAT=e.latlng.lat;CUR_LNG=e.latlng.lng;CUR_FIPS=fp;CUR_LID=lid||null;sr(lid?LOCALS[lid]:null,cn,lid);showCountyLabel(cn,e.latlng.lat,e.latlng.lng,hanfordColor||(lid?LOCALS[lid].color:'#475569'));if(selLayer&&selLayer!==e.target)cl.resetStyle(selLayer);selLayer=e.target;selLayer.setStyle(selSty());autoSelectDispatch();if(PRIMARY_DISPATCH){var pc=LOCALS[PRIMARY_DISPATCH.lid]?LOCALS[PRIMARY_DISPATCH.lid].color:'#2563eb';drawRoute(PRIMARY_DISPATCH.lat,PRIMARY_DISPATCH.lng,PRIMARY_DISPATCH.name.split(',')[0],e.latlng.lat,e.latlng.lng,pc);}}});}
+function ah(f,layer){layer.on({mouseover:function(e){var t=e.target;if(hvLayer&&hvLayer!==t){resetLyr(hvLayer);hvLayer=null;}var hlid=FL[t.feature.id.toString()];if(hlid){t.setStyle(hvSty(hlid));t.bringToFront();if(selLayer&&selLayer!==t)selLayer.bringToFront();}hvLayer=t;},mouseout:function(e){resetLyr(e.target);if(hvLayer===e.target)hvLayer=null;},click:function(e){L.DomEvent.stopPropagation(e);CUR_SEARCH_ADDRESS=null;var ft=e.target.feature,fp=ft.id.toString(),lid=FL[fp],sf=String(ft.id).padStart(5,'0').slice(0,2);var cn=(ft.properties&&ft.properties.name)?ft.properties.name+' County, '+(SA[sf]||''):'FIPS '+fp;CUR_HANFORD=detectHanfordArea(e.latlng.lat,e.latlng.lng);CUR_L73SITE=detectL73Site(e.latlng.lat,e.latlng.lng);var hanfordColor=CUR_HANFORD?HANFORD_AREAS[CUR_HANFORD].color:null;pm(e.latlng.lat,e.latlng.lng,hanfordColor||(lid?LOCALS[lid].color:'#888'));CUR_LAT=e.latlng.lat;CUR_LNG=e.latlng.lng;CUR_FIPS=fp;CUR_LID=lid||null;swTrack('county_click',cn,lid);sr(lid?LOCALS[lid]:null,cn,lid);showCountyLabel(cn,e.latlng.lat,e.latlng.lng,hanfordColor||(lid?LOCALS[lid].color:'#475569'));if(selLayer&&selLayer!==e.target)cl.resetStyle(selLayer);selLayer=e.target;selLayer.setStyle(selSty());autoSelectDispatch();if(PRIMARY_DISPATCH){var pc=LOCALS[PRIMARY_DISPATCH.lid]?LOCALS[PRIMARY_DISPATCH.lid].color:'#2563eb';drawRoute(PRIMARY_DISPATCH.lat,PRIMARY_DISPATCH.lng,PRIMARY_DISPATCH.name.split(',')[0],e.latlng.lat,e.latlng.lng,pc);}}});}
 cl=L.geoJSON(GEO,{style:sc,onEachFeature:ah}).addTo(map);
 // Stripe patterns for sub-territory counties: each local's color with thin
 // white diagonals (pattern id "subpat-<lid>"). Lives in the overlay-pane SVG
@@ -965,6 +1012,7 @@ buildIrexLayer();
 
 function toggleIrex(){
   IREX_VISIBLE=!IREX_VISIBLE;
+  swTrack('irex',IREX_VISIBLE?'on':'off');
   var btn=document.getElementById('btn-irex');
   if(IREX_VISIBLE){
     IREX_LAYER.addTo(map);
@@ -2435,6 +2483,7 @@ function exportPdf(){
   if(typeof window.jspdf==='undefined'){
     alert('Export library still loading. Try again in a moment.');return;
   }
+  var sbmEl=document.getElementById('sbm');swTrack('pdf_export',sbmEl?sbmEl.textContent:'',CUR_LID);
   var origText=btn.innerHTML;
   btn.disabled=true;
   btn.innerHTML='<span style="font-family:Space Mono,monospace">Capturing\u2026</span>';
