@@ -1,7 +1,14 @@
 // Leaflet.SmoothWheelZoom — Google Maps-style smooth wheel zoom for Leaflet.
 // Vendored locally (same-origin) because the package is not published to npm.
 // Source: https://github.com/Mutsuyuki/Leaflet.SmoothWheelZoom (master)
-// License: MIT (see upstream repo). Do not edit; re-vendor from upstream to update.
+// License: MIT (see upstream repo). Re-vendor from upstream to update, then
+// re-apply the two LOCAL PATCH lines below (search "LOCAL PATCH"):
+//   1. _move() is tagged {pinch:true} so Leaflet's GridLayer treats each
+//      animation frame like a touch pinch: it only CSS-scales the tiles it has
+//      instead of aborting/re-requesting/pruning tiles 60x a second. That per-
+//      frame churn made satellite tiles (heavy JPEGs) freeze the map.
+//   2. _onWheelEnd fires a plain 'zoom' before _moveEnd so the tile layers do
+//      one real update at the final zoom level once the wheel stops.
 L.Map.mergeOptions({
     // @section Mousewheel options
     // @option smoothWheelZoom: Boolean|String = true
@@ -74,6 +81,7 @@ L.Map.SmoothWheelZoom = L.Handler.extend({
     _onWheelEnd: function (e) {
         this._isWheeling = false;
         cancelAnimationFrame(this._zoomAnimationId);
+        this._map.fire('zoom'); // LOCAL PATCH (see header): load tiles at the settled zoom
         this._map._moveEnd(true);
     },
 
@@ -101,7 +109,7 @@ L.Map.SmoothWheelZoom = L.Handler.extend({
             this._moved = true;
         }
 
-        map._move(this._center, this._zoom);
+        map._move(this._center, this._zoom, {pinch: true}); // LOCAL PATCH (see header)
         this._prevCenter = map.getCenter();
         this._prevZoom = map.getZoom();
 

@@ -356,7 +356,7 @@ body{font-family:'DM Sans',sans-serif;background:#f8fafc;color:#0f172a}
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="SmoothWheelZoom.js?v=1"></script>
+<script src="SmoothWheelZoom.js?v=2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ── Supabase v2 ─────────────────────────────────────────────────────────────
@@ -707,13 +707,21 @@ var GEO={"type":"FeatureCollection","features":[{"type":"Feature","id":"06005","
 var map=L.map('map',{center:[45.5,-113.0],zoom:5,zoomSnap:0.25,zoomDelta:0.5,scrollWheelZoom:false,smoothWheelZoom:true,smoothSensitivity:2});
 // Base tiles: Mapbox (CARTO's free basemaps now watermark every tile with "API KEY REQUIRED").
 // 512px tiles + zoomOffset:-1 is the standard Mapbox/Leaflet pairing; {r} adds @2x on retina.
-var MBX_TILE_OPTS={tileSize:512,zoomOffset:-1,detectRetina:true,maxZoom:19,crossOrigin:'anonymous'};
+// NO detectRetina: with 512px tiles + {r} Leaflet already requests @2x (1024px)
+// images on HiDPI screens, which exactly matches device pixels. detectRetina on
+// top of that halved the slot to 256 CSS px -> 4x the tiles, 4x the decoded
+// pixels, and a zoom-18 cap on retina screens, for zero visual gain.
+var MBX_TILE_OPTS={tileSize:512,zoomOffset:-1,maxZoom:19,crossOrigin:'anonymous'};
 var MBX_ATTR='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> <a href="https://www.mapbox.com/map-feedback/">Improve this map</a>';
-function mbxStyleLayer(style,attr){
-  return L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/'+style+'/tiles/{z}/{x}/{y}{r}?access_token='+MAPBOX_TOKEN,Object.assign({attribution:attr},MBX_TILE_OPTS));
+function mbxStyleLayer(style,attr,extra){
+  return L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/'+style+'/tiles/{z}/{x}/{y}{r}?access_token='+MAPBOX_TOKEN,Object.assign({attribution:attr},MBX_TILE_OPTS,extra||{}));
 }
 var BASE_MAP=mbxStyleLayer('light-v11',MBX_ATTR);
-var BASE_SAT=mbxStyleLayer('satellite-streets-v12',MBX_ATTR+' &copy; Maxar');
+// Satellite tiles are ~270KB JPEGs (vs ~30KB for Light), so: don't fetch any
+// while a wheel zoom is still animating (updateWhenZooming:false — the
+// existing tiles just scale until the zoom settles, then the right level
+// loads once), and keep a thinner ring of off-screen tiles in memory.
+var BASE_SAT=mbxStyleLayer('satellite-streets-v12',MBX_ATTR+' &copy; Maxar',{updateWhenZooming:false,keepBuffer:1});
 var BASEMAP_KEY='subwatt_basemap';
 var CUR_BASEMAP='map';
 function setBasemap(which,save){
