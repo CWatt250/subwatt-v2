@@ -2760,11 +2760,30 @@ window.flyTo=flyTo;window.toggleHelp=toggleHelp;window.clearResult=clearResult;w
 // ── CBA named-site markers (Local 73) + Hwy 49 divider (Local 16) ───────────
 // Placed here (end of boot) so L73_SITES / SR49_LINE are initialized.
 (function(){
+  // Dots live in their own pane above the county overlay: the county hover
+  // handler calls bringToFront(), which would otherwise re-stack the hovered
+  // county over the dot and steal its tooltip. Hovering a dot also highlights
+  // the county beneath it so the two cues don't fight.
+  map.createPane('sites').style.zIndex=450;
+  function layerForLatLng(lat,lng){
+    var ft=featureForLatLng(lat,lng);if(!ft||!cl)return null;
+    var found=null;cl.eachLayer(function(l){if(!found&&l.feature===ft)found=l;});return found;
+  }
+  function hoverCountyUnder(lat,lng){
+    var t=layerForLatLng(lat,lng);if(!t||hvLayer===t)return;
+    if(hvLayer){resetLyr(hvLayer);hvLayer=null;}
+    var hlid=FL[t.feature.id.toString()];
+    if(hlid){t.setStyle(hvSty(hlid));t.bringToFront();if(selLayer&&selLayer!==t)selLayer.bringToFront();}
+    hvLayer=t;
+  }
+  function unhoverCounty(){if(hvLayer){resetLyr(hvLayer);hvLayer=null;}}
   if(LOCALS[73]){
     L73_SITES.forEach(function(s){
       var col=s.zone===3?'#b91c1c':(s.zone===2?'#d97706':(LOCALS[73].color||'#8b5cf6'));
-      L.circleMarker([s.lat,s.lng],{radius:5,color:'#fff',weight:1.5,fillColor:col,fillOpacity:.95})
+      L.circleMarker([s.lat,s.lng],{radius:5,color:'#fff',weight:1.5,fillColor:col,fillOpacity:.95,pane:'sites'})
         .bindTooltip(s.name+' — '+(s.zone?('Zone '+s.zone+' (named in CBA)'):'Southern AZ Target Area town'),{direction:'top'})
+        .on('mouseover',function(){hoverCountyUnder(s.lat,s.lng);})
+        .on('mouseout',unhoverCounty)
         .on('click',function(ev){
           // Forward to the normal point-selection path so clicking the dot
           // behaves exactly like clicking the county under it.
@@ -2780,8 +2799,10 @@ window.flyTo=flyTo;window.toggleHelp=toggleHelp;window.clearResult=clearResult;w
       .addTo(map);
   }
   if(LOCALS[82]){
-    L.circleMarker([L82_CDA.lat,L82_CDA.lng],{radius:5,color:'#fff',weight:1.5,fillColor:LOCALS[82].color||'#4a90d9',fillOpacity:.95})
+    L.circleMarker([L82_CDA.lat,L82_CDA.lng],{radius:5,color:'#fff',weight:1.5,fillColor:LOCALS[82].color||'#4a90d9',fillOpacity:.95,pane:'sites'})
       .bindTooltip('Coeur d’Alene — free zone for Spokane residents (Local 82)',{direction:'top'})
+      .on('mouseover',function(){hoverCountyUnder(L82_CDA.lat,L82_CDA.lng);})
+      .on('mouseout',unhoverCounty)
       .on('click',function(ev){L.DomEvent.stopPropagation(ev);flyToCoord(L82_CDA.lat,L82_CDA.lng);})
       .addTo(map);
   }
