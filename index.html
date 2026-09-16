@@ -1474,9 +1474,13 @@ function showDrop(suggestions){
   paintDropRows();
 }
 
+// Deep-link overrides (?z= and ?c=lat,lng) — consumed by the first search so a
+// caller can frame the whole region (BidWatt's tour) instead of zoom 10 on the pin.
+var DEEP_ZOOM=null,DEEP_CENTER=null;
 function flyToCoord(lat,lng){
   CUR_LAT=lat;CUR_LNG=lng;
-  map.flyTo([lat,lng],10,{duration:1});
+  var zz=DEEP_ZOOM||10,cc=DEEP_CENTER||[lat,lng];DEEP_ZOOM=null;DEEP_CENTER=null;
+  map.flyTo(cc,zz,{duration:1});
   setTimeout(function(){
     if(!cl)return;
     // True point-in-polygon — bounding boxes overlap along county borders
@@ -1554,9 +1558,12 @@ setTimeout(function(){map.invalidateSize();},200);
 // Deep link: ?q=Goldendale%20WA auto-runs the search (WattBot "pull up SubWatt
 // for X" lands here). Waits a beat so the map + county layer are up first.
 (function(){
-  var q;
-  try{q=new URLSearchParams(location.search).get('q');}catch(e){return;}
+  var q,ps;
+  try{ps=new URLSearchParams(location.search);q=ps.get('q');}catch(e){return;}
   if(!q)return;
+  // Optional framing: ?z=7 zooms out after the search; ?c=46.6,-120.5 centers there.
+  var zp=parseFloat(ps.get('z')||'');if(zp>=3&&zp<=14)DEEP_ZOOM=zp;
+  var cp=(ps.get('c')||'').split(',').map(parseFloat);if(cp.length===2&&isFinite(cp[0])&&isFinite(cp[1]))DEEP_CENTER=[cp[0],cp[1]];
   setTimeout(function(){
     document.getElementById('si').value=q;
     mbxSuggest(q,function(suggestions){
