@@ -463,13 +463,28 @@ var LOCALS=data.locals;
 // Values the CBAs peg to a date or to the IRS rate. rate_config in Supabase
 // stores a snapshot; these keep computed numbers current without a database
 // write (the admin UI can only edit zone amounts/labels, not add fields).
-// IRS standard business mileage rate, effective 7/1/2026. A zone can override
-// via a mileageRate field in rate_config; this constant is the fallback.
+// IRS standard business mileage rate (irs.gov: 72.5¢ 1/1–6/30/2026, 76¢ from
+// 7/1/2026). A zone can override via a mileageRate field in rate_config; this
+// constant is the fallback. Update both lines when the IRS publishes a change.
 var IRS_MILEAGE_RATE=0.76;
+var IRS_MILEAGE_EFFECTIVE='7/1/2026';
+var IRS_MILEAGE_TEXT='$'+IRS_MILEAGE_RATE.toFixed(2)+'/mi — current IRS rate (eff. '+IRS_MILEAGE_EFFECTIVE+')';
 (function(){
-  // Local 7: CBA pegs the mileage zone to the IRS rate; the stored 0.67 is
-  // the 2024 figure. Patching here also fixes the calc-note display.
-  if(LOCALS[7]&&LOCALS[7].mileageCalc)LOCALS[7].mileageCalc.mileageRate=IRS_MILEAGE_RATE;
+  // Local 7: the CBA pays the Mileage Zone at "the IRS rate", with no dollar
+  // figure. rate_config stores the 2024 snapshot (0.67) in both the calc
+  // config and the zone-table note text; replace both so the sidebar table
+  // and the calculator show the same number.
+  if(LOCALS[7]&&LOCALS[7].mileageCalc){
+    var mc7=LOCALS[7].mileageCalc;
+    mc7.mileageRate=IRS_MILEAGE_RATE;
+    mc7.mileageNoteSuffix='(IRS rate · round-trip from free zone edge)';
+  }
+  if(LOCALS[7]&&LOCALS[7].travelZones)LOCALS[7].travelZones.forEach(function(z){
+    if(/IRS/i.test(z.rate||'')||/\$0\.67\/mi/.test(z.note||'')){
+      z.rate='IRS rate/mi';
+      z.note=IRS_MILEAGE_TEXT+' · round-trip from free zone boundary · no mileage if company vehicle';
+    }
+  });
 
   // ── Sub-territories ───────────────────────────────────────────────────────
   // A local's `subArea` marks a CBA-defined geography inside its territory
@@ -1206,7 +1221,9 @@ function sr(local,cn,lid){
         +'<th style="text-align:right;color:#3a4a60;font-weight:400;padding:2px 0 4px 0;border-bottom:1px solid #1a2540">Rate</th>'
         +'</tr>';
       local.travelZones.forEach(function(z){
-        var noteCell=z.note?'<div style="font-size:9px;color:#3a4a60;margin-top:1px">'+z.note+'</div>':'';
+        // Rate cell is nowrap (keeps "$150/day" on one line); the note must wrap
+        // or long notes run off the sidebar edge.
+        var noteCell=z.note?'<div style="font-size:9px;color:#3a4a60;margin-top:1px;white-space:normal;font-family:DM Sans,sans-serif">'+z.note+'</div>':'';
         zonesHtml+='<tr>'
           +'<td style="padding:3px 4px 3px 0;color:#8a9ab8;font-family:Space Mono,monospace;white-space:nowrap">'+z.label+'</td>'
           +'<td style="padding:3px 4px;color:#4a5a78;font-size:10px">'+z.miles+'</td>'
@@ -2667,7 +2684,7 @@ function exportPdf(){
         var rEl=outEl.querySelector('div[style*="Space Mono"]');
         if(rEl){
           rate=rEl.textContent.trim();
-          // The calc breakdown ("$0.67 × 3 mi × 2 (round-trip...)", zone calcNote,
+          // The calc breakdown ("$0.76 × 3 mi × 2 (IRS rate · round-trip...)", zone calcNote,
           // or HSSA note) is always the div right after the rate — same text for
           // every calc kind since it's scraped, not rebuilt. Skip the purple
           // "Alt:" sub-line, which is a separate row, not the breakdown.

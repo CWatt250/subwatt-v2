@@ -1,7 +1,7 @@
 // Verify the sidebar rate-math breakdown appears under DAILY TRAVEL RATE in the
 // exported PDF, for both calc kinds:
 //   A) Mileage zone (Local 7): dest King Co WA (53033), dispatch Seattle,
-//      canned 23 mi -> sidebar shows "$0.67 × 3 mi × 2 (round-trip from free zone edge)"
+//      canned 23 mi -> sidebar shows "$0.76 × 3 mi × 2 (IRS rate · round-trip from free zone edge)"
 //      -> PDF must contain the SAME text, drawn after the DAILY TRAVEL RATE label.
 //   B) Travel zone (Local 82): dest Morrow Co OR (41049), dispatch Pasco,
 //      canned 143.7 mi -> Zone 6+ Subsistence, note "Includes $35/day meals"
@@ -20,7 +20,7 @@ const SCENARIOS = [
     name: 'Local 7 mileage zone',
     fips: '53033', localRow: '7', dispatchMatch: 'seattle',
     cannedDistM: 37015, cannedDurS: 1800,            // 23.0 mi
-    expectNoteRe: /^\$0\.67 × 3 mi × 2 \(round-trip from free zone edge\)$/,
+    expectNoteRe: /^\$0\.76 × 3 mi × 2 \(IRS rate · round-trip from free zone edge\)$/,
   },
   {
     name: 'Local 82 travel zone',

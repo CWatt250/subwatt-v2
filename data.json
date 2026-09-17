@@ -40,7 +40,7 @@
           "label": "Mileage Zone",
           "miles": "21–70 mi beyond city limits",
           "rate": "IRS rate/mi",
-          "note": "$0.67/mi (2024) · round-trip from free zone boundary · no mileage if company vehicle"
+          "note": "$0.76/mi — current IRS rate (eff. 7/1/2026) · round-trip from free zone boundary · no mileage if company vehicle"
         },
         {
           "label": "Per Diem Zone",
@@ -52,7 +52,7 @@
       "mileageCalc": {
         "freeMaxMi": 20,
         "mileageMaxMi": 70,
-        "mileageRate": 0.67,
+        "mileageRate": 0.76,
         "mileageMultiplier": 2,
         "perDiemAmount": 150,
         "freeLabel": "Free Zone",
