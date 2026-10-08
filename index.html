@@ -1945,8 +1945,10 @@ function updateCost(){
 // ── Rate Zone toggle (top menu bar) ──────────────────────────────────────────
 // Shown only when the dispatch local and the destination county's local differ.
 // Lets the user flip the rate card between the two locals' tables against the
-// SAME road miles. Route, map line, mileage, drive time and zone rings never
-// change — only #calc-out (the rate card) is recalculated.
+// SAME road miles. Route, map line, mileage and drive time never change; the
+// rate card (#calc-out) is recalculated AND the dispatch zone rings are redrawn
+// from the selected local's zone table (same centre, same road miles), so the
+// rings on the map always show the zones the rate card is using.
 function rateSegHtml(lid,activeLid){
   var isActive=String(lid)===String(activeLid);
   var color=LOCALS[lid]?LOCALS[lid].color:'#475569';
@@ -1995,6 +1997,7 @@ function setRateLocal(lid){
   RATE_LID=lid;
   updateCost();
   updateRateToggle();
+  refreshPrimaryRings();
 }
 window.setRateLocal=setRateLocal;
 
@@ -2009,8 +2012,9 @@ function rebuildCalc(){
 function initCalc(){
   var rc=document.getElementById('rc');
   if(!rc||CUR_LAT===null)return;
-  // New selection — default the rate card back to the dispatch local.
+  // New selection — default the rate card (and the rings) back to the dispatch local.
   RATE_LID=null;
+  refreshPrimaryRings();
   rc.querySelectorAll('.rcsec[data-calc="1"]').forEach(function(el){el.remove();});
   var sec=document.createElement('div');
   sec.className='rcsec';
@@ -2381,9 +2385,15 @@ function setPrimaryDispatch(lid,name,lat,lng){
   }
 }
 
-function drawDispatchRings(lid,name,lat,lng){
-  var isA=inSubArea(lid,CUR_FIPS)&&!!(subAreaOf(lid)&&subAreaOf(lid).zones);
-  var rings=getZoneRings(lid,isA);
+// lid = the dispatch's own local (pin colour, "moved" flag). ringLid = whose zone
+// table the rings show — the dispatch local by default, or the local picked in the
+// Rate Zone toggle (same centre: the road miles are measured from this dispatch).
+var dispatchRingLid={};
+function drawDispatchRings(lid,name,lat,lng,ringLid){
+  if(ringLid==null)ringLid=lid;
+  dispatchRingLid[name]=ringLid;
+  var isA=inSubArea(ringLid,CUR_FIPS)&&!!(subAreaOf(ringLid)&&subAreaOf(ringLid).zones);
+  var rings=getZoneRings(ringLid,isA);
   var MI=1609.34,lc=LOCALS[lid]?LOCALS[lid].color:'#fff';
   var lg=L.layerGroup();
   [].concat(rings).reverse().forEach(function(r,i,arr){
@@ -2435,6 +2445,21 @@ function drawDispatchRings(lid,name,lat,lng){
   }).bindTooltip('<b>'+name+'</b> \u2014 '+(isMoved?'moved origin':'dispatch point')+' \u00b7 drag to set worker origin').addTo(lg);
   dispMk.on('dragend',function(e){onDispatchDragEnd(lid,name,e.target.getLatLng());});
   return lg;
+}
+
+// Redraw the primary dispatch's rings from the table the rate card is using
+// (RATE_LID when the toggle override is set, else the dispatch local). No-op when
+// the rings already match, so it is cheap to call from every reset path.
+function refreshPrimaryRings(){
+  var pd=PRIMARY_DISPATCH;
+  if(!pd||!dispatchLGs[pd.name])return;
+  var want=(RATE_LID!=null)?RATE_LID:pd.lid;
+  if(String(dispatchRingLid[pd.name])===String(want))return;
+  try{map.removeLayer(dispatchLGs[pd.name]);}catch(e){}
+  var lg=drawDispatchRings(pd.lid,pd.name,pd.lat,pd.lng,want);
+  dispatchLGs[pd.name]=lg;lg.addTo(map);
+  // Keep the road route above the freshly added (translucent) rings.
+  routeLayers.forEach(function(l){try{if(l.bringToFront)l.bringToFront();}catch(e){}});
 }
 
 // Fired when the user drops a dragged dispatch pin. Keeps the same rate
